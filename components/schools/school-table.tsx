@@ -109,12 +109,6 @@ export function SchoolTable() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/schools/${school.id}`}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          <span>View Details</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
                         <Link href={`/dashboard/schools/${school.id}/edit`}>
                           <Edit className="mr-2 w-4" />
                           <span>Edit</span>

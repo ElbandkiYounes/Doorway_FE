@@ -109,12 +109,6 @@ export function RoleTable() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/roles/${role.id}`}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          <span>View Details</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
                         <Link href={`/dashboard/roles/${role.id}/edit`}>
                           <Edit className="mr-2 h-4 w-4" />
                           <span>Edit</span>

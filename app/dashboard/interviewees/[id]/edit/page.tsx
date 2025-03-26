@@ -22,7 +22,6 @@ export default function EditIntervieweePage() {
     name: "",
     email: "",
     phoneNumber: "",
-    password: "",
     dateOfBirth: "",
     schoolId: "",
   })
@@ -54,7 +53,6 @@ export default function EditIntervieweePage() {
           name: intervieweeData.name,
           email: intervieweeData.email,
           phoneNumber: intervieweeData.phoneNumber,
-          password: "", // Don't populate password for security reasons
           dateOfBirth: dateOfBirth,
           schoolId: intervieweeData.school?.id.toString() || "",
         })
@@ -189,15 +187,6 @@ export default function EditIntervieweePage() {
       errors.phoneNumber = "Invalid phone number format. Expected format: +<country_code>XXXXXXXXXX or XXXXXXXXXX"
     }
 
-    // Password is optional on edit, but if provided must meet requirements
-    if (
-      formData.password &&
-      !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(formData.password)
-    ) {
-      errors.password =
-        "Password must be at least 8 characters long, include uppercase, lowercase, digit, and special character"
-    }
-
     if (!formData.dateOfBirth) {
       errors.dateOfBirth = "Date of birth is required"
     } else {
@@ -281,11 +270,6 @@ export default function EditIntervieweePage() {
       const payload = {
         ...formData,
         schoolId: Number(formData.schoolId),
-      }
-
-      // If password is empty, inject the old value instead of deleting
-      if (!payload.password || payload.password.trim() === "") {
-        payload.password = interviewee?.password || "";
       }
 
       // Get the current profile image and resume if not changed
@@ -394,25 +378,6 @@ export default function EditIntervieweePage() {
                 placeholder="+1234567890"
                 className={validationErrors.phoneNumber ? "border-destructive" : ""}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className={validationErrors.password ? "text-destructive" : ""}>
-                Password (Leave blank to keep current)
-                {validationErrors.password && <span className="ml-1 text-xs">({validationErrors.password})</span>}
-              </Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="••••••••"
-                className={validationErrors.password ? "border-destructive" : ""}
-              />
-              <p className="text-xs text-muted-foreground">
-                Password must be at least 8 characters long, include uppercase, lowercase, digit, and special character.
-              </p>
             </div>
 
             <div className="space-y-2">

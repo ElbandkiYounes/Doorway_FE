@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast"
 export default function NewRolePage() {
   const [name, setName] = useState("")
   const [loading, setLoading] = useState(false)
+  const [validationError, setValidationError] = useState("") // New state for validation error
   const router = useRouter()
   const { toast } = useToast()
 
@@ -31,6 +32,19 @@ export default function NewRolePage() {
 
     try {
       setLoading(true)
+
+      // Check for duplicate role name
+      const allRoles = await roleAPI.getAll()
+      const duplicate = allRoles.find(
+        (role) => role.name.toLowerCase() === name.trim().toLowerCase()
+      )
+      if (duplicate) {
+        setValidationError(`A role with the name "${name.trim()}" already exists`)
+        setLoading(false)
+        return
+      }
+
+      setValidationError("") // Clear previous error if any
       await roleAPI.create({ name })
       toast({
         title: "Success",
@@ -70,6 +84,7 @@ export default function NewRolePage() {
                 placeholder="e.g., Frontend Developer"
                 required
               />
+              {validationError && <p className="text-sm text-destructive">{validationError}</p>}
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">

@@ -30,9 +30,6 @@ export default function NewInterviewingProcessPage() {
 
   const validate = () => {
     const newErrors: { feedback?: string; roleId?: string } = {}
-    if (!feedback.trim()) {
-      newErrors.feedback = "Feedback is mandatory"
-    }
     if (!roleId) {
       newErrors.roleId = "Role is mandatory"
     }
@@ -44,7 +41,11 @@ export default function NewInterviewingProcessPage() {
     e.preventDefault()
     if (!validate()) return
     try {
-      const payload = { feedback, decision: "NEUTRAL", roleId: Number(roleId) }
+      const payload = { 
+        feedback: feedback.trim() || null, // Allow empty feedback 
+        decision: "NEUTRAL", 
+        roleId: Number(roleId) 
+      }
       const newProcess = await interviewingProcessAPI.create(intervieweeId, payload)
       toast({ title: "Process Created", description: "New interviewing process started." })
       router.push(`/dashboard/interviewees/${intervieweeId}`)
@@ -59,14 +60,13 @@ export default function NewInterviewingProcessPage() {
       <h1 className="text-2xl font-bold mb-4">Create New Interviewing Process</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Feedback</label>
+          <label className="block text-sm font-medium mb-1">Feedback (Optional)</label>
           <textarea
             className="w-full border rounded p-2"
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
             rows={4}
           />
-          {errors.feedback && <p className="text-sm text-destructive mt-1">{errors.feedback}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Select Role</label>

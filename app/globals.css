@@ -91,4 +91,83 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+
+  .rbc-calendar {
+    @apply rounded-md border border-border bg-card text-card-foreground;
+  }
+  
+  .rbc-toolbar {
+    @apply mb-4 flex flex-wrap justify-between gap-2 p-2;
+  }
+  
+  .rbc-toolbar button {
+    @apply inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+  }
+  
+  .rbc-toolbar button.rbc-active {
+    @apply bg-secondary text-secondary-foreground;
+  }
+  
+  .rbc-month-view,
+  .rbc-time-view {
+    @apply rounded-md border border-border;
+  }
+  
+  .rbc-header {
+    @apply border-border bg-muted p-2 text-sm font-medium;
+  }
+  
+  .rbc-day-bg {
+    @apply border-border;
+  }
+  
+  .rbc-off-range-bg {
+    @apply bg-muted/40;
+  }
+  
+  .rbc-today {
+    @apply bg-accent/30;
+  }
+  
+  .rbc-event {
+    @apply rounded-md border border-primary/20 bg-primary/10 text-primary-foreground shadow-sm;
+  }
+  
+  .rbc-event.rbc-selected {
+    @apply bg-primary/20;
+  }
+  
+  .rbc-slot-selection {
+    @apply bg-primary/20;
+  }
+  
+  .rbc-time-content,
+  .rbc-time-header {
+    @apply border-border;
+  }
+  
+  .rbc-time-slot {
+    @apply text-xs;
+  }
+  
+  .rbc-agenda-view table.rbc-agenda-table {
+    @apply w-full border-collapse border-border;
+  }
+  
+  .rbc-agenda-view table.rbc-agenda-table thead > tr > th {
+    @apply border-b border-border bg-muted p-2 text-left text-sm font-medium;
+  }
+  
+  .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+    @apply border-b border-border p-2 text-sm;
+  }
+  
+  .rbc-agenda-time-cell {
+    @apply text-muted-foreground;
+  }
+  
+  .rbc-agenda-date-cell,
+  .rbc-agenda-event-cell {
+    @apply font-medium;
+  }
 }
