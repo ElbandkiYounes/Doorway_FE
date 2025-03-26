@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast"
 export default function NewSchoolPage() {
   const [name, setName] = useState("")
   const [loading, setLoading] = useState(false)
+  const [validationError, setValidationError] = useState("") // New state for validation error
   const router = useRouter()
   const { toast } = useToast()
 
@@ -31,6 +32,19 @@ export default function NewSchoolPage() {
 
     try {
       setLoading(true)
+
+      // Check for duplicate school name
+      const allSchools = await schoolAPI.getAll()
+      const duplicate = allSchools.find(
+        (school) => school.name.toLowerCase() === name.trim().toLowerCase()
+      )
+      if (duplicate) {
+        setValidationError(`A school with the name "${name.trim()}" already exists`)
+        setLoading(false)
+        return
+      }
+
+      setValidationError("") // Clear previous error if any
       await schoolAPI.create({ name })
       toast({
         title: "Success",
@@ -56,7 +70,9 @@ export default function NewSchoolPage() {
         <form onSubmit={handleSubmit}>
           <CardHeader>
             <CardTitle>School Details</CardTitle>
-            <CardDescription>Add a new school to the system. Schools are associated with interviewees.</CardDescription>
+            <CardDescription>
+              Add a new school to the system. Schools are associated with interviewees.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -68,6 +84,7 @@ export default function NewSchoolPage() {
                 placeholder="e.g., Massachusetts Institute of Technology"
                 required
               />
+              {validationError && <p className="text-sm text-destructive">{validationError}</p>}
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">

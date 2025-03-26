@@ -21,7 +21,7 @@ async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise
   })
 
   if (!response.ok) {
-    let errorMessage = `API request failed with status ${response.status}`
+    let errorMessage = `API request failed with status ${response.status} for ${url} and Message: ${response.body}` 
     try {
       const errorData = await response.json()
       errorMessage = errorData.message || errorMessage
@@ -140,6 +140,9 @@ export const interviewerAPI = {
 export const interviewAPI = {
   getAll: async (intervieweeId: string, processId: string) => {
     return fetchAPI<Interview[]>(`/interviewee/${intervieweeId}/interviewing-process/${processId}/interviews`)
+  },
+  getAllInterviews: async () => {
+    return fetchAPI<Interview[]>("/interviews");
   },
   getById: async (id: string) => {
     return fetchAPI<Interview>(`/interviews/${id}`)
@@ -426,7 +429,6 @@ export interface Interviewee {
   email: string
   dateOfBirth: string
   phoneNumber: string
-  password?: string
   school: School
   profilePicture: string
   resume: string

@@ -5,14 +5,27 @@ import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, User, ArrowLeft } from "lucide-react"
-import { interviewAPI, technicalQuestionAPI, principleQuestionAPI, technicalAnswerAPI, principleAnswerAPI, type Interview, type TechnicalQuestion, type PrincipleQuestion, Language } from "@/lib/api-service"
+import { Calendar, User, ArrowLeft, Mail, Phone, MapPin } from "lucide-react"
+import { 
+  interviewAPI, 
+  intervieweeAPI,
+  technicalQuestionAPI, 
+  principleQuestionAPI, 
+  technicalAnswerAPI, 
+  principleAnswerAPI, 
+  type Interview, 
+  type TechnicalQuestion, 
+  type PrincipleQuestion, 
+  type Interviewee,
+  Language 
+} from "@/lib/api-service"
 import { useToast } from "@/hooks/use-toast"
 import { formatDate, formatPrinciple } from "@/lib/utils"
 import Link from "next/link"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const statusMap = {
   HIGHLY_INCLINED: { label: "Highly Inclined", badgeClass: "bg-green-500 text-white" },
@@ -27,6 +40,7 @@ export default function InterviewDetailsPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [interview, setInterview] = useState<Interview | null>(null)
+  const [interviewee, setInterviewee] = useState<Interviewee | null>(null)
   const [technicalQuestions, setTechnicalQuestions] = useState<TechnicalQuestion[]>([])
   const [principleQuestions, setPrincipleQuestions] = useState<PrincipleQuestion[]>([])
   const [newTechnicalAnswer, setNewTechnicalAnswer] = useState({ questionId: "", answer: "", bar: "MEDIUM", language: Language.JAVA })
@@ -69,6 +83,13 @@ export default function InterviewDetailsPage() {
         setInterview(interviewWithAnswers)
         setTechnicalQuestions(techQuestions)
         setPrincipleQuestions(prinQuestions)
+        
+        // Fetch interviewee data if available
+        if (interviewData.interviewingProcess?.intervieweeId) {
+          const intervieweeData = await intervieweeAPI.getById(interviewData.interviewingProcess.intervieweeId)
+          setInterviewee(intervieweeData)
+        }
+        
         setError(null)
       } catch (err) {
         console.error("Failed to fetch interview details:", err)
@@ -251,6 +272,7 @@ export default function InterviewDetailsPage() {
   }
 
   const process = interview.interviewingProcess
+  const interviewer = interview.interviewer
   
   return (
     <div className="mx-auto max-w-3xl">
@@ -272,6 +294,99 @@ export default function InterviewDetailsPage() {
             </Button>
           </div>
         </div>
+        <div className="mt-3 pt-3 border-t">
+          <div className="flex items-center">
+            <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+            <span className="text-sm">
+              {interview.scheduledAt && typeof interview.scheduledAt === 'string' 
+                ? formatDate(new Date(interview.scheduledAt))
+                : "Unknown date"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Interviewee & Interviewer Cards */}
+      <div className="grid md:grid-cols-2 gap-6 mb-6">
+        {/* Interviewee Card */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium">Interviewee</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-4">
+              <Avatar className="h-12 w-12">
+                <AvatarImage 
+                  src={interviewee?.profilePicture 
+                    ? `data:image/jpeg;base64,${interviewee.profilePicture}` 
+                    : "/placeholder.svg"
+                  }
+                  alt={interviewee?.name || "Unknown"} 
+                />
+                <AvatarFallback>
+                  {interviewee?.name
+                    ? interviewee.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                    : "UN"}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="text-lg font-medium">{interviewee?.name || "Unknown"}</h3>
+                {interviewee?.email && (
+                  <div className="flex items-center text-sm text-muted-foreground mt-1">
+                    <Mail className="h-3 w-3 mr-1" />
+                    <span>{interviewee.email}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            {process?.role?.name && (
+              <div className="mt-3 pt-3 border-t">
+                <span className="text-sm font-medium">Role: </span>
+                <Badge variant="outline" className="ml-1">{process.role.name}</Badge>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        {/* Interviewer Card */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium">Interviewer</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-4">
+              <Avatar className="h-12 w-12">
+                <AvatarImage 
+                  src={interviewer?.profilePicture 
+                    ? `data:image/jpeg;base64,${interviewer.profilePicture}` 
+                    : "/placeholder.svg"
+                  }
+                  alt={interviewer?.name || "Unknown"} 
+                />
+                <AvatarFallback>
+                  {interviewer?.name
+                    ? interviewer.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                    : "UN"}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="text-lg font-medium">{interviewer?.name || "Unknown"}</h3>
+                {interviewer?.email && (
+                  <div className="flex items-center text-sm text-muted-foreground mt-1">
+                    <Mail className="h-3 w-3 mr-1" />
+                    <span>{interviewer.email}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-6">
@@ -290,8 +405,7 @@ export default function InterviewDetailsPage() {
               </Label>
               <Select
                 value={newTechnicalAnswer.questionId}
-                onValueChange={(value) => setNewTechnicalAnswer({ ...newTechnicalAnswer, questionId: value })}
-              >
+                onValueChange={(value) => setNewTechnicalAnswer({ ...newTechnicalAnswer, questionId: value })}>
                 <SelectTrigger className={formErrors.technicalQuestion.questionId ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select a question" />
                 </SelectTrigger>
@@ -317,8 +431,7 @@ export default function InterviewDetailsPage() {
                 value={newTechnicalAnswer.answer}
                 onChange={(e) => setNewTechnicalAnswer({ ...newTechnicalAnswer, answer: e.target.value })}
                 rows={4}
-                className={formErrors.technicalQuestion.answer ? "border-destructive" : ""}
-              />
+                className={formErrors.technicalQuestion.answer ? "border-destructive" : ""} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="technicalLanguage" className="flex justify-between">
@@ -329,8 +442,7 @@ export default function InterviewDetailsPage() {
               </Label>
               <Select
                 value={newTechnicalAnswer.language}
-                onValueChange={(value) => setNewTechnicalAnswer({ ...newTechnicalAnswer, language: value })}
-              >
+                onValueChange={(value) => setNewTechnicalAnswer({ ...newTechnicalAnswer, language: value })}>
                 <SelectTrigger className={formErrors.technicalQuestion.language ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select language" />
                 </SelectTrigger>
@@ -352,8 +464,7 @@ export default function InterviewDetailsPage() {
               </Label>
               <Select
                 value={newTechnicalAnswer.bar}
-                onValueChange={(value) => setNewTechnicalAnswer({ ...newTechnicalAnswer, bar: value })}
-              >
+                onValueChange={(value) => setNewTechnicalAnswer({ ...newTechnicalAnswer, bar: value })}>
                 <SelectTrigger className={formErrors.technicalQuestion.bar ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select bar" />
                 </SelectTrigger>
@@ -383,8 +494,7 @@ export default function InterviewDetailsPage() {
               </Label>
               <Select
                 value={newPrincipleAnswer.questionId}
-                onValueChange={(value) => setNewPrincipleAnswer({ ...newPrincipleAnswer, questionId: value })}
-              >
+                onValueChange={(value) => setNewPrincipleAnswer({ ...newPrincipleAnswer, questionId: value })}>
                 <SelectTrigger className={formErrors.principleQuestion.questionId ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select a question" />
                 </SelectTrigger>
@@ -410,8 +520,7 @@ export default function InterviewDetailsPage() {
                 value={newPrincipleAnswer.answer}
                 onChange={(e) => setNewPrincipleAnswer({ ...newPrincipleAnswer, answer: e.target.value })}
                 rows={4}
-                className={formErrors.principleQuestion.answer ? "border-destructive" : ""}
-              />
+                className={formErrors.principleQuestion.answer ? "border-destructive" : ""} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="principleBar" className="flex justify-between">
@@ -422,8 +531,7 @@ export default function InterviewDetailsPage() {
               </Label>
               <Select
                 value={newPrincipleAnswer.bar}
-                onValueChange={(value) => setNewPrincipleAnswer({ ...newPrincipleAnswer, bar: value })}
-              >
+                onValueChange={(value) => setNewPrincipleAnswer({ ...newPrincipleAnswer, bar: value })}>
                 <SelectTrigger className={formErrors.principleQuestion.bar ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select bar" />
                 </SelectTrigger>

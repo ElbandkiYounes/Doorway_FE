@@ -19,7 +19,6 @@ export default function NewIntervieweePage() {
     name: "",
     email: "",
     phoneNumber: "",
-    password: "",
     dateOfBirth: "",
     schoolId: "",
   })
@@ -166,13 +165,6 @@ export default function NewIntervieweePage() {
       errors.phoneNumber = "Phone number is required"
     } else if (!/^(\+\d{1,3})?\d{10}$/.test(formData.phoneNumber)) {
       errors.phoneNumber = "Invalid phone number format. Expected format: +<country_code>XXXXXXXXXX or XXXXXXXXXX"
-    }
-
-    if (!formData.password.trim()) {
-      errors.password = "Password is required"
-    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(formData.password)) {
-      errors.password =
-        "Password must be at least 8 characters long, include uppercase, lowercase, digit, and special character"
     }
 
     if (!formData.dateOfBirth) {
@@ -326,25 +318,6 @@ export default function NewIntervieweePage() {
                 placeholder="+1234567890"
                 className={validationErrors.phoneNumber ? "border-destructive" : ""}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className={validationErrors.password ? "text-destructive" : ""}>
-                Password
-                {validationErrors.password && <span className="ml-1 text-xs">({validationErrors.password})</span>}
-              </Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="••••••••"
-                className={validationErrors.password ? "border-destructive" : ""}
-              />
-              <p className="text-xs text-muted-foreground">
-                Password must be at least 8 characters long, include uppercase, lowercase, digit, and special character.
-              </p>
             </div>
 
             <div className="space-y-2">

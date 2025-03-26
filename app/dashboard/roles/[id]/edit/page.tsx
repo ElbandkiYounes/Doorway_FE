@@ -96,7 +96,15 @@ export default function EditRolePage() {
               {validationError && <p className="text-sm text-destructive">{validationError}</p>}
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end">
+          <CardFooter className="flex justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/dashboard/roles")}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
             <Button type="submit" disabled={loading}>
               {loading ? "Updating..." : "Update Role"}
             </Button>
