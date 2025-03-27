@@ -19,13 +19,13 @@ import {
   type Interviewee,
   Language 
 } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
 import { formatDate, formatPrinciple } from "@/lib/utils"
 import Link from "next/link"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { toast } from 'react-toastify'
 
 const statusMap = {
   HIGHLY_INCLINED: { label: "Highly Inclined", badgeClass: "bg-green-500 text-white" },
@@ -38,7 +38,6 @@ const statusMap = {
 export default function InterviewDetailsPage() {
   const params = useParams()
   const router = useRouter()
-  const { toast } = useToast()
   const [interview, setInterview] = useState<Interview | null>(null)
   const [interviewee, setInterviewee] = useState<Interviewee | null>(null)
   const [technicalQuestions, setTechnicalQuestions] = useState<TechnicalQuestion[]>([])
@@ -94,18 +93,14 @@ export default function InterviewDetailsPage() {
       } catch (err) {
         console.error("Failed to fetch interview details:", err)
         setError("Failed to load interview details. Please try again later.")
-        toast({
-          title: "Error",
-          description: "Failed to load interview details",
-          variant: "destructive",
-        })
+        toast.error("Failed to load interview details")
       } finally {
         setLoading(false)
       }
     }
 
     fetchData()
-  }, [params.id, toast])
+  }, [params.id])
 
   const handleDelete = async () => {
     if (!interview) return
@@ -116,10 +111,7 @@ export default function InterviewDetailsPage() {
 
     try {
       await interviewAPI.delete(interview.id)
-      toast({
-        title: "Success",
-        description: "Interview deleted successfully",
-      })
+      toast.success("Interview deleted successfully")
       
       // Navigate back to the interviewee page
       if (interview.interviewingProcess?.interviewee?.id) {
@@ -129,11 +121,7 @@ export default function InterviewDetailsPage() {
       }
     } catch (err) {
       console.error("Failed to delete interview:", err)
-      toast({
-        title: "Error",
-        description: "Failed to delete interview",
-        variant: "destructive",
-      })
+      toast.error("Failed to delete interview")
     }
   }
 
@@ -193,11 +181,7 @@ export default function InterviewDetailsPage() {
     if (!interview) return;
 
     if (!validateTechnicalAnswer()) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      })
+      toast.error("Please fill in all required fields")
       return
     }
 
@@ -231,19 +215,12 @@ export default function InterviewDetailsPage() {
         }
       })
 
-      toast({
-        title: "Success",
-        description: "Technical answer added successfully",
-      })
+      toast.success("Technical answer added successfully")
       
       setNewTechnicalAnswer({ questionId: "", answer: "", bar: "MEDIUM", language: Language.JAVA })
     } catch (err) {
       console.error("Failed to add technical answer:", err)
-      toast({
-        title: "Error",
-        description: "Failed to add technical answer",
-        variant: "destructive",
-      })
+      toast.error(err instanceof Error ? err.message : "Failed to add technical answer")
     }
   }
 
@@ -251,11 +228,7 @@ export default function InterviewDetailsPage() {
     if (!interview) return;
 
     if (!validatePrincipleAnswer()) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      })
+      toast.error("Please fill in all required fields")
       return
     }
 
@@ -288,19 +261,12 @@ export default function InterviewDetailsPage() {
         }
       })
 
-      toast({
-        title: "Success",
-        description: "Principle answer added successfully",
-      })
+      toast.success("Principle answer added successfully")
       
       setNewPrincipleAnswer({ questionId: "", answer: "", bar: "MEDIUM" })
     } catch (err) {
       console.error("Failed to add principle answer:", err)
-      toast({
-        title: "Error",
-        description: "Failed to add principle answer",
-        variant: "destructive",
-      })
+      toast.error(err instanceof Error ? err.message : "Failed to add principle answer")
     }
   }
 
