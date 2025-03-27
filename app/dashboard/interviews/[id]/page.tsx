@@ -190,6 +190,8 @@ export default function InterviewDetailsPage() {
   }
 
   const handleAddTechnicalAnswer = async () => {
+    if (!interview) return;
+
     if (!validateTechnicalAnswer()) {
       toast({
         title: "Validation Error",
@@ -200,18 +202,40 @@ export default function InterviewDetailsPage() {
     }
 
     try {
-      await technicalAnswerAPI.create(newTechnicalAnswer.questionId, interview.id, {
+      const newAnswer = await technicalAnswerAPI.create(newTechnicalAnswer.questionId, interview.id, {
         answer: newTechnicalAnswer.answer,
         bar: newTechnicalAnswer.bar,
         language: newTechnicalAnswer.language,
       })
+
+      const questionDetails = technicalQuestions.find(
+        q => q.id.toString() === newTechnicalAnswer.questionId
+      )
+
+      if (!questionDetails) {
+        throw new Error("Question not found")
+      }
+
+      // Update with type-safe answer
+      setInterview(prev => {
+        if (!prev) return null
+        return {
+          ...prev,
+          technicalAnswers: [
+            ...(prev.technicalAnswers || []),
+            {
+              ...newAnswer,
+              question: questionDetails // Now we know questionDetails is defined
+            }
+          ]
+        }
+      })
+
       toast({
         title: "Success",
         description: "Technical answer added successfully",
       })
-      // Refresh interview data
-      const updatedInterview = await interviewAPI.getById(interview.id)
-      setInterview(updatedInterview)
+      
       setNewTechnicalAnswer({ questionId: "", answer: "", bar: "MEDIUM", language: Language.JAVA })
     } catch (err) {
       console.error("Failed to add technical answer:", err)
@@ -224,6 +248,8 @@ export default function InterviewDetailsPage() {
   }
 
   const handleAddPrincipleAnswer = async () => {
+    if (!interview) return;
+
     if (!validatePrincipleAnswer()) {
       toast({
         title: "Validation Error",
@@ -234,17 +260,39 @@ export default function InterviewDetailsPage() {
     }
 
     try {
-      await principleAnswerAPI.create(newPrincipleAnswer.questionId, interview.id, {
+      const newAnswer = await principleAnswerAPI.create(newPrincipleAnswer.questionId, interview.id, {
         answer: newPrincipleAnswer.answer,
         bar: newPrincipleAnswer.bar,
       })
+
+      const questionDetails = principleQuestions.find(
+        q => q.id.toString() === newPrincipleAnswer.questionId
+      )
+
+      if (!questionDetails) {
+        throw new Error("Question not found")
+      }
+
+      // Update with type-safe answer
+      setInterview(prev => {
+        if (!prev) return null
+        return {
+          ...prev,
+          principleAnswers: [
+            ...(prev.principleAnswers || []),
+            {
+              ...newAnswer,
+              question: questionDetails // Now we know questionDetails is defined
+            }
+          ]
+        }
+      })
+
       toast({
         title: "Success",
         description: "Principle answer added successfully",
       })
-      // Refresh interview data
-      const updatedInterview = await interviewAPI.getById(interview.id)
-      setInterview(updatedInterview)
+      
       setNewPrincipleAnswer({ questionId: "", answer: "", bar: "MEDIUM" })
     } catch (err) {
       console.error("Failed to add principle answer:", err)
@@ -442,7 +490,7 @@ export default function InterviewDetailsPage() {
               </Label>
               <Select
                 value={newTechnicalAnswer.language}
-                onValueChange={(value) => setNewTechnicalAnswer({ ...newTechnicalAnswer, language: value })}>
+                onValueChange={(value) => setNewTechnicalAnswer({ ...newTechnicalAnswer, language: value as Language })}>
                 <SelectTrigger className={formErrors.technicalQuestion.language ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select language" />
                 </SelectTrigger>
