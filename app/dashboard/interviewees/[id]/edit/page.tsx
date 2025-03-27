@@ -9,14 +9,13 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { intervieweeAPI, schoolAPI, type School, type Interviewee } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
 import { AlertCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { toast } from 'react-toastify'
 
 export default function EditIntervieweePage() {
   const params = useParams()
   const router = useRouter()
-  const { toast } = useToast()
 
   const [formData, setFormData] = useState({
     name: "",
@@ -58,18 +57,14 @@ export default function EditIntervieweePage() {
         })
       } catch (err) {
         console.error("Failed to fetch data:", err)
-        toast({
-          title: "Error",
-          description: "Failed to load interviewee data. Please try again.",
-          variant: "destructive",
-        })
+        toast.error("Failed to load interviewee data. Please try again.")
       } finally {
         setLoadingData(false)
       }
     }
 
     fetchData()
-  }, [params.id, toast])
+  }, [params.id])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -218,11 +213,7 @@ export default function EditIntervieweePage() {
     e.preventDefault()
 
     if (!validateForm()) {
-      toast({
-        title: "Validation Error",
-        description: "Please fix the errors in the form",
-        variant: "destructive",
-      })
+      toast.error("Please fix the errors in the form")
       return
     }
 
@@ -238,11 +229,7 @@ export default function EditIntervieweePage() {
             ...prev,
             email: "Email already exists",
           }))
-          toast({
-            title: "Validation Error",
-            description: "Email already exists",
-            variant: "destructive",
-          })
+          toast.error("Email already exists")
           setLoading(false)
           return
         }
@@ -256,11 +243,7 @@ export default function EditIntervieweePage() {
             ...prev,
             phoneNumber: "Phone number already exists",
           }))
-          toast({
-            title: "Validation Error",
-            description: "Phone number already exists",
-            variant: "destructive",
-          })
+          toast.error("Phone number already exists")
           setLoading(false)
           return
         }
@@ -281,19 +264,12 @@ export default function EditIntervieweePage() {
 
       await intervieweeAPI.update(id, payload, imageFile, resumeFile)
 
-      toast({
-        title: "Success",
-        description: "Interviewee updated successfully",
-      })
+      toast.success("Interviewee updated successfully")
 
       router.push(`/dashboard/interviewees/${id}`)
     } catch (error: any) {
       console.error("Failed to update interviewee:", error)
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update interviewee. Please try again.",
-        variant: "destructive",
-      })
+      toast.error(error.message || "Failed to update interviewee. Please try again.")
     } finally {
       setLoading(false)
     }
