@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -10,9 +8,9 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { intervieweeAPI, schoolAPI, type School } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
 import { AlertCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { toast } from 'react-toastify'
 
 export default function NewIntervieweePage() {
   const [formData, setFormData] = useState({
@@ -29,7 +27,6 @@ export default function NewIntervieweePage() {
   const [loadingSchools, setLoadingSchools] = useState(true)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const router = useRouter()
-  const { toast } = useToast()
 
   useEffect(() => {
     const fetchSchools = async () => {
@@ -38,18 +35,14 @@ export default function NewIntervieweePage() {
         setSchools(data)
       } catch (error) {
         console.error("Failed to fetch schools:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load schools. Please try again.",
-          variant: "destructive",
-        })
+        toast.error("Failed to load schools. Please try again.")
       } finally {
         setLoadingSchools(false)
       }
     }
 
     fetchSchools()
-  }, [toast])
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -197,11 +190,7 @@ export default function NewIntervieweePage() {
     e.preventDefault()
 
     if (!validateForm()) {
-      toast({
-        title: "Validation Error",
-        description: "Please fix the errors in the form",
-        variant: "destructive",
-      })
+      toast.error("Please fix the errors in the form")
       return
     }
 
@@ -215,11 +204,7 @@ export default function NewIntervieweePage() {
           ...prev,
           email: "Email already exists",
         }))
-        toast({
-          title: "Validation Error",
-          description: "Email already exists",
-          variant: "destructive",
-        })
+        toast.error("Email already exists")
         return
       }
 
@@ -230,11 +215,7 @@ export default function NewIntervieweePage() {
           ...prev,
           phoneNumber: "Phone number already exists",
         }))
-        toast({
-          title: "Validation Error",
-          description: "Phone number already exists",
-          variant: "destructive",
-        })
+        toast.error("Phone number already exists")
         return
       }
 
@@ -246,19 +227,12 @@ export default function NewIntervieweePage() {
 
       await intervieweeAPI.create(payload, profileImage!, resume!)
 
-      toast({
-        title: "Success",
-        description: "Interviewee created successfully",
-      })
+      toast.success("Interviewee created successfully")
 
       router.push("/dashboard/interviewees")
     } catch (error: any) {
       console.error("Failed to create interviewee:", error)
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create interviewee. Please try again.",
-        variant: "destructive",
-      })
+      toast.error(error.message || "Failed to create interviewee. Please try again.")
     } finally {
       setLoading(false)
     }
