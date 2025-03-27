@@ -8,9 +8,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, FileText, Mail, Phone, School, Clock, User } from "lucide-react"
 import { intervieweeAPI, interviewingProcessAPI, interviewAPI, type Interviewee, type InterviewingProcess, type Interview } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
-import { formatDate } from "@/lib/utils"
 import Link from "next/link"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { toast } from 'react-toastify'
+import { formatDate } from "@/lib/utils"
 
 const statusMap = {
   HIGHLY_INCLINED: { label: "Highly Inclined", badgeClass: "bg-green-500 text-white" },
@@ -23,7 +31,6 @@ const statusMap = {
 export default function IntervieweeDetailsPage() {
   const params = useParams()
   const router = useRouter()
-  const { toast } = useToast()
   const [interviewee, setInterviewee] = useState<Interviewee | null>(null)
   const [processes, setProcesses] = useState<InterviewingProcess[]>([])
   const [selectedProcessId, setSelectedProcessId] = useState<string | null>(null)
@@ -31,6 +38,7 @@ export default function IntervieweeDetailsPage() {
   const [loading, setLoading] = useState(true)
   const [loadingInterviews, setLoadingInterviews] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,18 +56,14 @@ export default function IntervieweeDetailsPage() {
       } catch (err) {
         console.error("Failed to fetch interviewee details:", err)
         setError("Failed to load interviewee details. Please try again later.")
-        toast({
-          title: "Error",
-          description: "Failed to load interviewee details",
-          variant: "destructive",
-        })
+        toast.error("Failed to load interviewee details")
       } finally {
         setLoading(false)
       }
     }
 
     fetchData()
-  }, [params.id, toast])
+  }, [params.id])
 
   // Fetch interviews when process selection changes
   useEffect(() => {
@@ -76,40 +80,27 @@ export default function IntervieweeDetailsPage() {
         setInterviews(data);
       } catch (err) {
         console.error("Failed to fetch interviews:", err);
-        toast({
-          title: "Error",
-          description: "Failed to load interviews",
-          variant: "destructive",
-        });
+        toast.error("Failed to load interviews")
       } finally {
         setLoadingInterviews(false);
       }
     };
 
     fetchInterviews();
-  }, [selectedProcessId, params.id, toast]);
+  }, [selectedProcessId, params.id]);
 
   const handleDelete = async () => {
-    if (!interviewee) return
-
-    if (!confirm("Are you sure you want to delete this interviewee? This action cannot be undone.")) {
-      return
-    }
-
     try {
-      await intervieweeAPI.delete(interviewee.id)
-      toast({
-        title: "Success",
-        description: "Interviewee deleted successfully",
-      })
+      setLoading(true)
+      await intervieweeAPI.delete(params.id as string)
+      toast.success("Interviewee deleted successfully")
       router.push("/dashboard/interviewees")
-    } catch (err) {
-      console.error("Failed to delete interviewee:", err)
-      toast({
-        title: "Error",
-        description: "Failed to delete interviewee",
-        variant: "destructive",
-      })
+    } catch (error) {
+      console.error("Failed to delete interviewee:", error)
+      toast.error("Failed to delete interviewee")
+    } finally {
+      setLoading(false)
+      setIsDeleteDialogOpen(false)
     }
   }
 
@@ -139,11 +130,43 @@ export default function IntervieweeDetailsPage() {
           <Button variant="outline" asChild>
             <Link href={`/dashboard/interviewees/${interviewee.id}/edit`}>Edit</Link>
           </Button>
-          <Button variant="destructive" onClick={handleDelete}>
-            Delete
+          <Button 
+            variant="destructive" 
+            onClick={() => setIsDeleteDialogOpen(true)}
+            disabled={loading}
+          >
+            {loading ? "Deleting..." : "Delete"}
           </Button>
         </div>
       </div>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Interviewee</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this interviewee? This action cannot be undone 
+              and will remove all associated data including interviews and processes.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex space-x-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={loading}
+            >
+              {loading ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
         <div>
