@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,14 +8,32 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Bell, Settings, LogOut, User } from "lucide-react"
-import { ModeToggle } from "@/components/mode-toggle"
-import { useMobile } from "@/hooks/use-mobile"
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Bell, Settings, LogOut } from "lucide-react";
+import { ModeToggle } from "@/components/mode-toggle";
+import { useMobile } from "@/hooks/use-mobile";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { Interviewer, userAPI } from "@/lib/api-service";
 
 export function Header() {
-  const isMobile = useMobile()
+  const { logout } = useAuth();
+  const [user, setUser] = useState<Interviewer | null>(null);
+  const isMobile = useMobile();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await userAPI.getCurrentUser();
+        setUser(userData);
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
@@ -30,7 +48,12 @@ export function Header() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder.svg" alt="User" />
+                <AvatarImage src={
+                            user?.profilePicture
+                              ? `data:image/jpeg;base64,${user.profilePicture}`
+                              : "/placeholder.svg"
+                          }
+                          alt={user?.name} />
                 <AvatarFallback>AD</AvatarFallback>
               </Avatar>
             </Button>
@@ -38,21 +61,12 @@ export function Header() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Admin User</p>
-                <p className="text-xs leading-none text-muted-foreground">admin@doorway.com</p>
+                <p className="text-sm font-medium leading-none">{user?.name}</p>
+                <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={logout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
             </DropdownMenuItem>
@@ -60,6 +74,6 @@ export function Header() {
         </DropdownMenu>
       </div>
     </header>
-  )
+  );
 }
 

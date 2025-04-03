@@ -1,15 +1,19 @@
-// Update the API service to match the backend implementation
-
 // Base API URL - using localhost for development
-const API_BASE_URL = "http://localhost:8080/api"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
-// Generic fetch function with error handling
+// Generic fetch function with error handling and auth token
 async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`
-
-  const defaultHeaders = {
+  const url = `${API_BASE_URL}${endpoint}`;
+  
+  const defaultHeaders: HeadersInit = {
     "Content-Type": "application/json",
-    Accept: "application/json",
+    "Accept": "application/json",
+  };
+  
+  // Add authentication token if available
+  const token = localStorage.getItem('doorway_token');
+  if (token) {
+    defaultHeaders["Authorization"] = `Bearer ${token}`;
   }
 
   const response = await fetch(url, {
@@ -18,60 +22,68 @@ async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise
       ...defaultHeaders,
       ...options.headers,
     },
-  })
+  });
 
   if (!response.ok) {
-    let errorMessage = `API request failed with status ${response.status} for ${url} and Message: ${response.body}` 
+    let errorMessage = `API request failed with status ${response.status}`;
     try {
-      const errorData = await response.json()
-      errorMessage = errorData.message || errorMessage
+      const errorData = await response.json();
+      errorMessage = errorData.message || errorMessage;
     } catch (e) {
       // If parsing JSON fails, use the default error message
     }
-    throw new Error(errorMessage)
+    throw new Error(errorMessage);
   }
 
-  // For 204 No Content responses
   if (response.status === 204) {
-    return {} as T
+    return {} as T;
   }
 
-  return response.json()
+  return response.json();
 }
 
 // Form data fetch for multipart/form-data requests
 async function fetchFormDataAPI<T>(endpoint: string, formData: FormData, method = "POST"): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`
+  const url = `${API_BASE_URL}${endpoint}`;
+  
+  // Add authentication token if available
+  const token = localStorage.getItem('doorway_token');
+  const headers: HeadersInit = {};
+  
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
   const response = await fetch(url, {
     method,
     body: formData,
-  })
+    headers
+  });
 
   if (!response.ok) {
-    let errorMessage = `API request failed with status ${response.status}`
+    let errorMessage = `API request failed with status ${response.status}`;
     try {
-      const errorData = await response.json()
-      errorMessage = errorData.message || errorMessage
+      const errorData = await response.json();
+      errorMessage = errorData.message || errorMessage;
     } catch (e) {
       // If parsing JSON fails, use the default error message
     }
-    throw new Error(errorMessage)
+    throw new Error(errorMessage);
   }
 
   // For 204 No Content responses
   if (response.status === 204) {
-    return {} as T
+    return {} as T;
   }
 
-  return response.json()
+  return response.json();
 }
 
 // Interviewee API
 export const intervieweeAPI = {
   getAll: async (decision?: string) => {
-    const queryParams = decision ? `?decision=${decision}` : ""
-    return fetchAPI<Interviewee[]>(`/interviewees${queryParams}`)
+    const queryParams = decision ? `?decision=${decision}` : "";
+    return fetchAPI<Interviewee[]>(`/interviewees${queryParams}`);
   },
   getById: async (id: string) => {
     return fetchAPI<Interviewee>(`/interviewees/${id}`)
@@ -346,6 +358,13 @@ export const schoolAPI = {
   },
 }
 
+// User API
+export const userAPI = {
+  getCurrentUser: async () => {
+    return fetchAPI<Interviewer>("/me");
+  },
+};
+
 // Types for the API responses
 export enum Decision {
   HIGHLY_INCLINED = "HIGHLY_INCLINED",
@@ -403,84 +422,84 @@ export enum ExcellencePrinciple {
 
 // Update the interfaces to match the backend entities
 export interface TechnicalQuestion {
-  id: number
-  question: string
+  id: number;
+  question: string;
 }
 
 export interface PrincipleQuestion {
-  id: number
-  question: string
-  principle: ExcellencePrinciple
+  id: number;
+  question: string;
+  principle: ExcellencePrinciple;
 }
 
 export interface School {
-  id: number
-  name: string
+  id: number;
+  name: string;
 }
 
 export interface Role {
-  id: number
-  name: string
+  id: number;
+  name: string;
 }
 
 export interface Interviewee {
-  id: string // UUID
-  name: string
-  email: string
-  dateOfBirth: string
-  phoneNumber: string
-  school: School
-  profilePicture: string
-  resume: string
-  newestInterviewingProcess?: InterviewingProcess
+  id: string; // UUID
+  name: string;
+  email: string;
+  dateOfBirth: string;
+  phoneNumber: string;
+  school: School;
+  profilePicture: string;
+  resume: string;
+  newestInterviewingProcess?: InterviewingProcess;
 }
 
 export interface Interviewer {
-  id: string // UUID
-  name: string
-  email: string
-  phoneNumber: string
-  password?: string
-  role: Role
-  profilePicture: string
+  id: string; // UUID
+  name: string;
+  email: string;
+  phoneNumber: string;
+  password?: string;
+  role: Role;
+  profilePicture: string;
 }
 
 export interface InterviewingProcess {
-  id: string // UUID
-  decision: Decision
-  feedback: string
-  role: Role
-  interviewee: Interviewee
-  intervieweeId: string // UUID
-  interviews: Interview[]
-  createdAt: string
+  id: string; // UUID
+  decision: Decision;
+  feedback: string;
+  role: Role;
+  interviewee: Interviewee;
+  intervieweeId: string; // UUID
+  interviews: Interview[];
+  createdAt: string;
 }
 
 export interface Interview {
-  id: string // UUID
-  feedback: string
-  decision: Decision
-  scheduledAt: string
-  interviewer: Interviewer
-  interviewingProcess: InterviewingProcess
-  principleAnswers?: PrincipleAnswer[]
-  technicalAnswers?: TechnicalAnswer[]
+  id: string; // UUID
+  feedback: string;
+  decision: Decision;
+  scheduledAt: string;
+  interviewer: Interviewer;
+  interviewingProcess: InterviewingProcess;
+  principleAnswers?: PrincipleAnswer[];
+  technicalAnswers?: TechnicalAnswer[];
 }
 
 export interface PrincipleAnswer {
-  id: number
-  answer: string
-  bar: Bar
-  question: PrincipleQuestion
-  interview: Interview
+  id: number;
+  answer: string;
+  bar: Bar;
+  question: PrincipleQuestion;
+  interview: Interview;
 }
 
 export interface TechnicalAnswer {
-  id: number
-  language: Language
-  answer: string
-  bar: Bar
-  question: TechnicalQuestion
-  interview: Interview
+  id: number;
+  language: Language;
+  answer: string;
+  bar: Bar;
+  question: TechnicalQuestion;
+  interview: Interview;
 }
 
