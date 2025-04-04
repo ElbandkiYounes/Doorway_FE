@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -9,24 +8,20 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { schoolAPI } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from 'react-toastify'
 
 export default function NewSchoolPage() {
   const [name, setName] = useState("")
   const [loading, setLoading] = useState(false)
-  const [validationError, setValidationError] = useState("") // New state for validation error
+  const [validationError, setValidationError] = useState("")
   const router = useRouter()
-  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!name.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "School name is required",
-        variant: "destructive",
-      })
+      toast.error("Please fix the errors in the form")
+      setValidationError("School name is required")
       return
     }
 
@@ -40,24 +35,18 @@ export default function NewSchoolPage() {
       )
       if (duplicate) {
         setValidationError(`A school with the name "${name.trim()}" already exists`)
+        toast.error("School name already exists")
         setLoading(false)
         return
       }
 
-      setValidationError("") // Clear previous error if any
+      setValidationError("")
       await schoolAPI.create({ name })
-      toast({
-        title: "Success",
-        description: "School created successfully",
-      })
+      toast.success("School created successfully")
       router.push("/dashboard/schools")
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to create school:", error)
-      toast({
-        title: "Error",
-        description: "Failed to create school. Please try again.",
-        variant: "destructive",
-      })
+      toast.error(error.message || "Failed to create school. Please try again.")
     } finally {
       setLoading(false)
     }

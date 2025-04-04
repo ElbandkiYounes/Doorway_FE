@@ -17,7 +17,13 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function NewIntervieweePage() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    email: string;
+    phoneNumber: string;
+    dateOfBirth: Date | null;
+    schoolId: string;
+  }>({
     name: "",
     email: "",
     phoneNumber: "",
@@ -320,7 +326,7 @@ export default function NewIntervieweePage() {
                 <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
-                    selected={formData.dateOfBirth}
+                    selected={formData.dateOfBirth || undefined}
                     onSelect={(date) => handleChange("dateOfBirth", date || null)}
                     disabled={(date) => date >= new Date()}
                     initialFocus

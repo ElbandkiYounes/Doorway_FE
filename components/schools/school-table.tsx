@@ -13,14 +13,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Eye, Edit, Trash } from "lucide-react"
 import { schoolAPI, type School } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+import { toast } from 'react-toastify'
 
 export function SchoolTable() {
   const [schools, setSchools] = useState<School[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { toast } = useToast()
 
   useEffect(() => {
     const fetchSchools = async () => {
@@ -32,34 +31,23 @@ export function SchoolTable() {
       } catch (err) {
         console.error("Failed to fetch schools:", err)
         setError("Failed to load schools. Please try again later.")
-        toast({
-          title: "Error",
-          description: "Failed to load schools",
-          variant: "destructive",
-        })
+        toast.error("Failed to load schools. Please try again.")
       } finally {
         setLoading(false)
       }
     }
 
     fetchSchools()
-  }, [toast])
+  }, [])
 
   const handleDelete = async (id: string) => {
     try {
       await schoolAPI.delete(id)
       setSchools(schools.filter((school) => school.id.toString() !== id))
-      toast({
-        title: "Success",
-        description: "School deleted successfully",
-      })
-    } catch (err) {
+      toast.success("School deleted successfully")
+    } catch (err: any) {
       console.error("Failed to delete school:", err)
-      toast({
-        title: "Error",
-        description: "Failed to delete school",
-        variant: "destructive",
-      })
+      toast.error(err.message || "Failed to delete school. Please try again.")
     }
   }
 
