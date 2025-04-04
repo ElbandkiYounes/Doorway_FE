@@ -7,41 +7,44 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card"
 import { roleAPI, type Role } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from 'react-toastify'
 
 export default function EditRolePage() {
   const params = useParams()
   const router = useRouter()
-  const { toast } = useToast()
 
   const [name, setName] = useState("")
   const [loading, setLoading] = useState(true)
-  // New state for inline validation error
   const [validationError, setValidationError] = useState("")
 
   useEffect(() => {
     const fetchRole = async () => {
       try {
+        if (typeof params.id !== "string") {
+          throw new Error("Invalid role ID")
+        }
         const data: Role = await roleAPI.getById(params.id)
         setName(data.name)
       } catch (error: any) {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to load role.",
-          variant: "destructive",
-        })
+        toast.error(error.message || "Failed to load role.")
       } finally {
         setLoading(false)
       }
     }
     fetchRole()
-  }, [params.id, toast])
+  }, [params.id])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!name.trim()) {
+      toast.error("Please fix the errors in the form")
+      setValidationError("Role name is required")
+      return
+    }
+
     try {
       setLoading(true)
-      // Check for duplicate role name
       const allRoles = await roleAPI.getAll()
       const duplicate = allRoles.find(
         (role) =>
@@ -49,24 +52,22 @@ export default function EditRolePage() {
           role.id.toString() !== params.id
       )
       if (duplicate) {
-        // Set inline validation error instead of showing a toast
         setValidationError(`A role with the name "${name.trim()}" already exists`)
+        toast.error("Role name already exists")
         setLoading(false)
         return
       }
-      setValidationError("") // clear previous error if any
-      await roleAPI.update(params.id, { name })
-      toast({
-        title: "Success",
-        description: "Role updated successfully",
-      })
+      setValidationError("")
+      if (typeof params.id === "string") {
+        await roleAPI.update(params.id, { name })
+      } else {
+        throw new Error("Invalid role ID")
+      }
+      toast.success("Role updated successfully")
       router.push("/dashboard/roles")
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update role",
-        variant: "destructive",
-      })
+      console.error("Failed to update role:", error)
+      toast.error(error.message || "Failed to update role. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -84,7 +85,6 @@ export default function EditRolePage() {
             <CardDescription>Update the role name below.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* ...existing form layout... */}
             <div className="space-y-2">
               <Label htmlFor="name">Role Name</Label>
               <Input

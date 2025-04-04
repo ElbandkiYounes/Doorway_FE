@@ -11,16 +11,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Eye, Edit, Trash } from "lucide-react"
+import { MoreHorizontal, Edit, Trash } from "lucide-react"
 import { roleAPI, type Role } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+import { toast } from 'react-toastify'
 
 export function RoleTable() {
   const [roles, setRoles] = useState<Role[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { toast } = useToast()
 
   useEffect(() => {
     const fetchRoles = async () => {
@@ -32,34 +31,23 @@ export function RoleTable() {
       } catch (err) {
         console.error("Failed to fetch roles:", err)
         setError("Failed to load roles. Please try again later.")
-        toast({
-          title: "Error",
-          description: "Failed to load roles",
-          variant: "destructive",
-        })
+        toast.error("Failed to load roles. Please try again.")
       } finally {
         setLoading(false)
       }
     }
 
     fetchRoles()
-  }, [toast])
+  }, [])
 
   const handleDelete = async (id: string) => {
     try {
       await roleAPI.delete(id)
       setRoles(roles.filter((role) => role.id.toString() !== id))
-      toast({
-        title: "Success",
-        description: "Role deleted successfully",
-      })
-    } catch (err) {
+      toast.success("Role deleted successfully")
+    } catch (err: any) {
       console.error("Failed to delete role:", err)
-      toast({
-        title: "Error",
-        description: "Failed to delete role",
-        variant: "destructive",
-      })
+      toast.error(err.message || "Failed to delete role. Please try again.")
     }
   }
 
