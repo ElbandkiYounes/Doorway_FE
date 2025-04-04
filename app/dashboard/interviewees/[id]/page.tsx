@@ -214,7 +214,7 @@ export default function IntervieweeDetailsPage() {
                 <div className="flex items-center">
                   <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
                   <span className="text-sm">
-                    {interviewee.dateOfBirth ? formatDate(new Date(interviewee.dateOfBirth)) : "No DOB"}
+                    {interviewee.dateOfBirth ? new Date(interviewee.dateOfBirth).toLocaleDateString() : "No DOB"}
                   </span>
                 </div>
                 <div className="flex items-center">

@@ -12,6 +12,10 @@ import { intervieweeAPI, schoolAPI, type School, type Interviewee } from "@/lib/
 import { AlertCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { toast } from 'react-toastify'
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function EditIntervieweePage() {
   const params = useParams()
@@ -21,7 +25,7 @@ export default function EditIntervieweePage() {
     name: "",
     email: "",
     phoneNumber: "",
-    dateOfBirth: "",
+    dateOfBirth: null,
     schoolId: "",
   })
 
@@ -43,16 +47,11 @@ export default function EditIntervieweePage() {
         setInterviewee(intervieweeData)
         setSchools(schoolsData)
 
-        // Format date for input field (YYYY-MM-DD)
-        const dateOfBirth = intervieweeData.dateOfBirth
-          ? new Date(intervieweeData.dateOfBirth).toISOString().split("T")[0]
-          : ""
-
         setFormData({
           name: intervieweeData.name,
           email: intervieweeData.email,
           phoneNumber: intervieweeData.phoneNumber,
-          dateOfBirth: dateOfBirth,
+          dateOfBirth: intervieweeData.dateOfBirth ? new Date(intervieweeData.dateOfBirth) : null,
           schoolId: intervieweeData.school?.id.toString() || "",
         })
       } catch (err) {
@@ -66,15 +65,14 @@ export default function EditIntervieweePage() {
     fetchData()
   }, [params.id])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+  const handleChange = (field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
 
     // Clear validation error when field is edited
-    if (validationErrors[name]) {
+    if (validationErrors[field]) {
       setValidationErrors((prev) => {
         const newErrors = { ...prev }
-        delete newErrors[name]
+        delete newErrors[field]
         return newErrors
       })
     }
@@ -253,6 +251,7 @@ export default function EditIntervieweePage() {
       const payload = {
         ...formData,
         schoolId: Number(formData.schoolId),
+        dateOfBirth: formData.dateOfBirth ? formData.dateOfBirth.toISOString().split("T")[0] : null,
       }
 
       // Get the current profile image and resume if not changed
@@ -319,7 +318,7 @@ export default function EditIntervieweePage() {
                 id="name"
                 name="name"
                 value={formData.name}
-                onChange={handleChange}
+                onChange={(e) => handleChange("name", e.target.value)}
                 placeholder="John Doe"
                 className={validationErrors.name ? "border-destructive" : ""}
               />
@@ -335,7 +334,7 @@ export default function EditIntervieweePage() {
                 name="email"
                 type="email"
                 value={formData.email}
-                onChange={handleChange}
+                onChange={(e) => handleChange("email", e.target.value)}
                 placeholder="john.doe@example.com"
                 className={validationErrors.email ? "border-destructive" : ""}
               />
@@ -350,7 +349,7 @@ export default function EditIntervieweePage() {
                 id="phoneNumber"
                 name="phoneNumber"
                 value={formData.phoneNumber}
-                onChange={handleChange}
+                onChange={(e) => handleChange("phoneNumber", e.target.value)}
                 placeholder="+1234567890"
                 className={validationErrors.phoneNumber ? "border-destructive" : ""}
               />
@@ -361,15 +360,30 @@ export default function EditIntervieweePage() {
                 Date of Birth
                 {validationErrors.dateOfBirth && <span className="ml-1 text-xs">({validationErrors.dateOfBirth})</span>}
               </Label>
-              <Input
-                id="dateOfBirth"
-                name="dateOfBirth"
-                type="date"
-                value={formData.dateOfBirth}
-                onChange={handleChange}
-                className={validationErrors.dateOfBirth ? "border-destructive" : ""}
-                max={new Date().toISOString().split("T")[0]}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !formData.dateOfBirth && "text-muted-foreground",
+                      validationErrors.dateOfBirth && "border-destructive"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.dateOfBirth ? formData.dateOfBirth.toLocaleDateString() : "Select a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={formData.dateOfBirth}
+                    onSelect={(date) => handleChange("dateOfBirth", date || null)}
+                    disabled={(date) => date >= new Date()}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">

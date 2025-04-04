@@ -122,14 +122,7 @@ export default function InterviewsPage() {
         <h1 className="text-3xl font-bold tracking-tight">Interview Calendar</h1>
       </div>
 
-      <InterviewFilters />
-
       <Card className="shadow-md border-none">
-        <CardHeader className="bg-muted/50 dark:bg-muted/30 border-b">
-          <CardTitle className="text-xl font-semibold text-foreground">
-            Upcoming Interviews
-          </CardTitle>
-        </CardHeader>
         <CardContent className="p-0">
           <div className="h-[700px]">
             <Calendar

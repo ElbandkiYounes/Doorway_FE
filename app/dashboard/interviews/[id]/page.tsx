@@ -5,19 +5,20 @@ import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, User, ArrowLeft, Mail, Phone, MapPin } from "lucide-react"
-import { 
-  interviewAPI, 
+import { Calendar, ArrowLeft, Mail } from "lucide-react"
+import { useTheme } from "next-themes"
+import {
+  interviewAPI,
   intervieweeAPI,
-  technicalQuestionAPI, 
-  principleQuestionAPI, 
-  technicalAnswerAPI, 
-  principleAnswerAPI, 
-  type Interview, 
-  type TechnicalQuestion, 
-  type PrincipleQuestion, 
+  technicalQuestionAPI,
+  principleQuestionAPI,
+  technicalAnswerAPI,
+  principleAnswerAPI,
+  type Interview,
+  type TechnicalQuestion,
+  type PrincipleQuestion,
   type Interviewee,
-  Language 
+  Language,
 } from "@/lib/api-service"
 import { formatDate, formatPrinciple } from "@/lib/utils"
 import Link from "next/link"
@@ -25,7 +26,15 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { toast } from 'react-toastify'
+import { toast } from "react-toastify"
+import Editor from "react-simple-code-editor"
+import { highlight, languages } from "prismjs"
+import "prismjs/components/prism-java"
+import "prismjs/components/prism-javascript"
+import "prismjs/components/prism-python"
+import "prismjs/components/prism-csharp"
+import "prismjs/components/prism-go"
+import "prismjs/themes/prism-tomorrow.css"
 
 const statusMap = {
   HIGHLY_INCLINED: { label: "Highly Inclined", badgeClass: "bg-green-500 text-white" },
@@ -35,20 +44,54 @@ const statusMap = {
   HIGHLY_DECLINED: { label: "Highly Declined", badgeClass: "bg-red-700 text-white" },
 }
 
+const getLanguageForPrism = (language: string) => {
+  switch (language.toLowerCase()) {
+    case "java":
+      return languages.java
+    case "javascript":
+    case "typescript":
+      return languages.javascript
+    case "python":
+      return languages.python
+    case "csharp":
+      return languages.csharp
+    case "go":
+      return languages.go
+    default:
+      return languages.java
+  }
+}
+
+const getEditorStyles = (isDarkMode: boolean) => {
+  return {
+    fontFamily: '"Fira code", "Fira Mono", monospace',
+    fontSize: 14,
+    backgroundColor: isDarkMode ? "hsl(var(--muted))" : "hsl(var(--muted))",
+    color: isDarkMode ? "hsl(var(--foreground))" : "hsl(var(--foreground))",
+  }
+}
+
 export default function InterviewDetailsPage() {
   const params = useParams()
   const router = useRouter()
+  const { theme } = useTheme()
+  const isDarkMode = theme === "dark"
   const [interview, setInterview] = useState<Interview | null>(null)
   const [interviewee, setInterviewee] = useState<Interviewee | null>(null)
   const [technicalQuestions, setTechnicalQuestions] = useState<TechnicalQuestion[]>([])
   const [principleQuestions, setPrincipleQuestions] = useState<PrincipleQuestion[]>([])
-  const [newTechnicalAnswer, setNewTechnicalAnswer] = useState({ questionId: "", answer: "", bar: "MEDIUM", language: Language.JAVA })
+  const [newTechnicalAnswer, setNewTechnicalAnswer] = useState({
+    questionId: "",
+    answer: "",
+    bar: "MEDIUM",
+    language: Language.JAVA,
+  })
   const [newPrincipleAnswer, setNewPrincipleAnswer] = useState({ questionId: "", answer: "", bar: "MEDIUM" })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [formErrors, setFormErrors] = useState({
     technicalQuestion: { questionId: "", answer: "", bar: "", language: "" },
-    principleQuestion: { questionId: "", answer: "", bar: "" }
+    principleQuestion: { questionId: "", answer: "", bar: "" },
   })
 
   useEffect(() => {
@@ -56,15 +99,9 @@ export default function InterviewDetailsPage() {
       try {
         setLoading(true)
         const id = params.id as string
-        
+
         // Fetch interview and answers in parallel
-        const [
-          interviewData, 
-          techAnswers, 
-          prinAnswers,
-          techQuestions,
-          prinQuestions
-        ] = await Promise.all([
+        const [interviewData, techAnswers, prinAnswers, techQuestions, prinQuestions] = await Promise.all([
           interviewAPI.getById(id),
           technicalAnswerAPI.getByInterviewId(id),
           principleAnswerAPI.getByInterviewId(id),
@@ -82,13 +119,13 @@ export default function InterviewDetailsPage() {
         setInterview(interviewWithAnswers)
         setTechnicalQuestions(techQuestions)
         setPrincipleQuestions(prinQuestions)
-        
+
         // Fetch interviewee data if available
         if (interviewData.interviewingProcess?.intervieweeId) {
           const intervieweeData = await intervieweeAPI.getById(interviewData.interviewingProcess.intervieweeId)
           setInterviewee(intervieweeData)
         }
-        
+
         setError(null)
       } catch (err) {
         console.error("Failed to fetch interview details:", err)
@@ -112,7 +149,7 @@ export default function InterviewDetailsPage() {
     try {
       await interviewAPI.delete(interview.id)
       toast.success("Interview deleted successfully")
-      
+
       // Navigate back to the interviewee page
       if (interview.interviewingProcess?.interviewee?.id) {
         router.push(`/dashboard/interviewees/${interview.interviewingProcess.interviewee.id}`)
@@ -146,9 +183,9 @@ export default function InterviewDetailsPage() {
       isValid = false
     }
 
-    setFormErrors(prev => ({
+    setFormErrors((prev) => ({
       ...prev,
-      technicalQuestion: errors
+      technicalQuestion: errors,
     }))
     return isValid
   }
@@ -170,15 +207,15 @@ export default function InterviewDetailsPage() {
       isValid = false
     }
 
-    setFormErrors(prev => ({
+    setFormErrors((prev) => ({
       ...prev,
-      principleQuestion: errors
+      principleQuestion: errors,
     }))
     return isValid
   }
 
   const handleAddTechnicalAnswer = async () => {
-    if (!interview) return;
+    if (!interview) return
 
     if (!validateTechnicalAnswer()) {
       toast.error("Please fill in all required fields")
@@ -192,16 +229,14 @@ export default function InterviewDetailsPage() {
         language: newTechnicalAnswer.language,
       })
 
-      const questionDetails = technicalQuestions.find(
-        q => q.id.toString() === newTechnicalAnswer.questionId
-      )
+      const questionDetails = technicalQuestions.find((q) => q.id.toString() === newTechnicalAnswer.questionId)
 
       if (!questionDetails) {
         throw new Error("Question not found")
       }
 
       // Update with type-safe answer
-      setInterview(prev => {
+      setInterview((prev) => {
         if (!prev) return null
         return {
           ...prev,
@@ -209,14 +244,14 @@ export default function InterviewDetailsPage() {
             ...(prev.technicalAnswers || []),
             {
               ...newAnswer,
-              question: questionDetails // Now we know questionDetails is defined
-            }
-          ]
+              question: questionDetails, // Now we know questionDetails is defined
+            },
+          ],
         }
       })
 
       toast.success("Technical answer added successfully")
-      
+
       setNewTechnicalAnswer({ questionId: "", answer: "", bar: "MEDIUM", language: Language.JAVA })
     } catch (err) {
       console.error("Failed to add technical answer:", err)
@@ -225,7 +260,7 @@ export default function InterviewDetailsPage() {
   }
 
   const handleAddPrincipleAnswer = async () => {
-    if (!interview) return;
+    if (!interview) return
 
     if (!validatePrincipleAnswer()) {
       toast.error("Please fill in all required fields")
@@ -238,16 +273,14 @@ export default function InterviewDetailsPage() {
         bar: newPrincipleAnswer.bar,
       })
 
-      const questionDetails = principleQuestions.find(
-        q => q.id.toString() === newPrincipleAnswer.questionId
-      )
+      const questionDetails = principleQuestions.find((q) => q.id.toString() === newPrincipleAnswer.questionId)
 
       if (!questionDetails) {
         throw new Error("Question not found")
       }
 
       // Update with type-safe answer
-      setInterview(prev => {
+      setInterview((prev) => {
         if (!prev) return null
         return {
           ...prev,
@@ -255,14 +288,14 @@ export default function InterviewDetailsPage() {
             ...(prev.principleAnswers || []),
             {
               ...newAnswer,
-              question: questionDetails // Now we know questionDetails is defined
-            }
-          ]
+              question: questionDetails, // Now we know questionDetails is defined
+            },
+          ],
         }
       })
 
       toast.success("Principle answer added successfully")
-      
+
       setNewPrincipleAnswer({ questionId: "", answer: "", bar: "MEDIUM" })
     } catch (err) {
       console.error("Failed to add principle answer:", err)
@@ -287,21 +320,19 @@ export default function InterviewDetailsPage() {
 
   const process = interview.interviewingProcess
   const interviewer = interview.interviewer
-  
+
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6">
         <Button variant="ghost" size="sm" className="mb-4" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Back
         </Button>
-        
+
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Interview Details</h1>
           <div className="flex space-x-2">
             <Button variant="outline" asChild>
-              <Link href={`/dashboard/interviews/${interview.id}/edit`}>
-                Edit
-              </Link>
+              <Link href={`/dashboard/interviews/${interview.id}/edit`}>Edit</Link>
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
               Delete
@@ -312,7 +343,7 @@ export default function InterviewDetailsPage() {
           <div className="flex items-center">
             <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
             <span className="text-sm">
-              {interview.scheduledAt && typeof interview.scheduledAt === 'string' 
+              {interview.scheduledAt && typeof interview.scheduledAt === "string"
                 ? formatDate(new Date(interview.scheduledAt))
                 : "Unknown date"}
             </span>
@@ -330,12 +361,13 @@ export default function InterviewDetailsPage() {
           <CardContent>
             <div className="flex items-center space-x-4">
               <Avatar className="h-12 w-12">
-                <AvatarImage 
-                  src={interviewee?.profilePicture 
-                    ? `data:image/jpeg;base64,${interviewee.profilePicture}` 
-                    : "/placeholder.svg"
+                <AvatarImage
+                  src={
+                    interviewee?.profilePicture
+                      ? `data:image/jpeg;base64,${interviewee.profilePicture}`
+                      : "/placeholder.svg"
                   }
-                  alt={interviewee?.name || "Unknown"} 
+                  alt={interviewee?.name || "Unknown"}
                 />
                 <AvatarFallback>
                   {interviewee?.name
@@ -359,12 +391,14 @@ export default function InterviewDetailsPage() {
             {process?.role?.name && (
               <div className="mt-3 pt-3 border-t">
                 <span className="text-sm font-medium">Role: </span>
-                <Badge variant="outline" className="ml-1">{process.role.name}</Badge>
+                <Badge variant="outline" className="ml-1">
+                  {process.role.name}
+                </Badge>
               </div>
             )}
           </CardContent>
         </Card>
-        
+
         {/* Interviewer Card */}
         <Card>
           <CardHeader className="pb-2">
@@ -373,12 +407,13 @@ export default function InterviewDetailsPage() {
           <CardContent>
             <div className="flex items-center space-x-4">
               <Avatar className="h-12 w-12">
-                <AvatarImage 
-                  src={interviewer?.profilePicture 
-                    ? `data:image/jpeg;base64,${interviewer.profilePicture}` 
-                    : "/placeholder.svg"
+                <AvatarImage
+                  src={
+                    interviewer?.profilePicture
+                      ? `data:image/jpeg;base64,${interviewer.profilePicture}`
+                      : "/placeholder.svg"
                   }
-                  alt={interviewer?.name || "Unknown"} 
+                  alt={interviewer?.name || "Unknown"}
                 />
                 <AvatarFallback>
                   {interviewer?.name
@@ -419,7 +454,8 @@ export default function InterviewDetailsPage() {
               </Label>
               <Select
                 value={newTechnicalAnswer.questionId}
-                onValueChange={(value) => setNewTechnicalAnswer({ ...newTechnicalAnswer, questionId: value })}>
+                onValueChange={(value) => setNewTechnicalAnswer({ ...newTechnicalAnswer, questionId: value })}
+              >
                 <SelectTrigger className={formErrors.technicalQuestion.questionId ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select a question" />
                 </SelectTrigger>
@@ -439,13 +475,22 @@ export default function InterviewDetailsPage() {
                   <span className="text-sm text-destructive">{formErrors.technicalQuestion.answer}</span>
                 )}
               </Label>
-              <Textarea
-                id="technicalAnswer"
-                placeholder="Provide your answer"
-                value={newTechnicalAnswer.answer}
-                onChange={(e) => setNewTechnicalAnswer({ ...newTechnicalAnswer, answer: e.target.value })}
-                rows={4}
-                className={formErrors.technicalQuestion.answer ? "border-destructive" : ""} />
+              <div
+                className={`border rounded-md overflow-hidden ${formErrors.technicalQuestion.answer ? "border-destructive" : "border-input"}`}
+              >
+                <Editor
+                  value={newTechnicalAnswer.answer}
+                  onValueChange={(code) => setNewTechnicalAnswer({ ...newTechnicalAnswer, answer: code })}
+                  highlight={(code) => {
+                    // Select language based on the selected language in the form
+                    const lang = newTechnicalAnswer.language.toLowerCase()
+                    return highlight(code, getLanguageForPrism(lang), lang)
+                  }}
+                  padding={16}
+                  style={getEditorStyles(isDarkMode)}
+                  className="min-h-[200px] w-full"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="technicalLanguage" className="flex justify-between">
@@ -456,7 +501,8 @@ export default function InterviewDetailsPage() {
               </Label>
               <Select
                 value={newTechnicalAnswer.language}
-                onValueChange={(value) => setNewTechnicalAnswer({ ...newTechnicalAnswer, language: value as Language })}>
+                onValueChange={(value) => setNewTechnicalAnswer({ ...newTechnicalAnswer, language: value as Language })}
+              >
                 <SelectTrigger className={formErrors.technicalQuestion.language ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select language" />
                 </SelectTrigger>
@@ -478,7 +524,8 @@ export default function InterviewDetailsPage() {
               </Label>
               <Select
                 value={newTechnicalAnswer.bar}
-                onValueChange={(value) => setNewTechnicalAnswer({ ...newTechnicalAnswer, bar: value })}>
+                onValueChange={(value) => setNewTechnicalAnswer({ ...newTechnicalAnswer, bar: value })}
+              >
                 <SelectTrigger className={formErrors.technicalQuestion.bar ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select bar" />
                 </SelectTrigger>
@@ -508,7 +555,8 @@ export default function InterviewDetailsPage() {
               </Label>
               <Select
                 value={newPrincipleAnswer.questionId}
-                onValueChange={(value) => setNewPrincipleAnswer({ ...newPrincipleAnswer, questionId: value })}>
+                onValueChange={(value) => setNewPrincipleAnswer({ ...newPrincipleAnswer, questionId: value })}
+              >
                 <SelectTrigger className={formErrors.principleQuestion.questionId ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select a question" />
                 </SelectTrigger>
@@ -534,7 +582,8 @@ export default function InterviewDetailsPage() {
                 value={newPrincipleAnswer.answer}
                 onChange={(e) => setNewPrincipleAnswer({ ...newPrincipleAnswer, answer: e.target.value })}
                 rows={4}
-                className={formErrors.principleQuestion.answer ? "border-destructive" : ""} />
+                className={formErrors.principleQuestion.answer ? "border-destructive" : ""}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="principleBar" className="flex justify-between">
@@ -545,7 +594,8 @@ export default function InterviewDetailsPage() {
               </Label>
               <Select
                 value={newPrincipleAnswer.bar}
-                onValueChange={(value) => setNewPrincipleAnswer({ ...newPrincipleAnswer, bar: value })}>
+                onValueChange={(value) => setNewPrincipleAnswer({ ...newPrincipleAnswer, bar: value })}
+              >
                 <SelectTrigger className={formErrors.principleQuestion.bar ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select bar" />
                 </SelectTrigger>
@@ -566,44 +616,45 @@ export default function InterviewDetailsPage() {
             <CardTitle>Technical Questions and Answers</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="border rounded-lg">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-4 font-medium">Question</th>
-                    <th className="text-left p-4 font-medium">Answer</th>
-                    <th className="text-left p-4 font-medium">Bar</th>
-                    <th className="text-left p-4 font-medium">Language</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {interview.technicalAnswers && interview.technicalAnswers.length > 0 ? (
-                    interview.technicalAnswers.map((answer) => (
-                      <tr key={answer.id} className="border-b last:border-0">
-                        <td className="p-4">
-                          {answer.question?.question || "Unknown Question"}
-                        </td>
-                        <td className="p-4 whitespace-pre-wrap">
-                          {answer.answer}
-                        </td>
-                        <td className="p-4">
-                          <Badge>{answer.bar}</Badge>
-                        </td>
-                        <td className="p-4">
-                          {answer.language}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={4} className="p-4 text-center text-muted-foreground">
-                        No technical answers available
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            {interview.technicalAnswers && interview.technicalAnswers.length > 0 ? (
+              <div className="grid gap-4">
+                {interview.technicalAnswers.map((answer) => (
+                  <Card key={answer.id} className="overflow-hidden">
+                    <CardHeader className="bg-muted/50 pb-2">
+                      <CardTitle className="text-base font-medium">
+                        {answer.question?.question || "Unknown Question"}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                      <div className="mb-4 border rounded-md overflow-hidden">
+                        <Editor
+                          value={answer.answer}
+                          onValueChange={() => {}}
+                          highlight={(code) =>
+                            highlight(code, getLanguageForPrism(answer.language), answer.language.toLowerCase())
+                          }
+                          padding={16}
+                          style={getEditorStyles(isDarkMode)}
+                          readOnly={true}
+                        />
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                        <div className="flex items-center">
+                          <span className="mr-1 font-medium">Bar:</span>
+                          <Badge variant="outline">{answer.bar}</Badge>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="mr-1 font-medium">Language:</span>
+                          <Badge variant="secondary">{answer.language}</Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">No technical answers available</div>
+            )}
           </CardContent>
         </Card>
 
@@ -612,44 +663,36 @@ export default function InterviewDetailsPage() {
             <CardTitle>Principle Questions and Answers</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="border rounded-lg">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-4 font-medium">Question</th>
-                    <th className="text-left p-4 font-medium">Answer</th>
-                    <th className="text-left p-4 font-medium">Bar</th>
-                    <th className="text-left p-4 font-medium">Principle</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {interview.principleAnswers && interview.principleAnswers.length > 0 ? (
-                    interview.principleAnswers.map((answer) => (
-                      <tr key={answer.id} className="border-b last:border-0">
-                        <td className="p-4">
-                          {answer.question?.question || "Unknown Question"}
-                        </td>
-                        <td className="p-4 whitespace-pre-wrap">
-                          {answer.answer}
-                        </td>
-                        <td className="p-4">
-                          <Badge>{answer.bar}</Badge>
-                        </td>
-                        <td className="p-4">
-                          {answer.question?.principle ? formatPrinciple(answer.question.principle) : "Unknown"}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={4} className="p-4 text-center text-muted-foreground">
-                        No principle answers available
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            {interview.principleAnswers && interview.principleAnswers.length > 0 ? (
+              <div className="grid gap-4">
+                {interview.principleAnswers.map((answer) => (
+                  <Card key={answer.id} className="overflow-hidden">
+                    <CardHeader className="bg-muted/50 pb-2">
+                      <CardTitle className="text-base font-medium">
+                        {answer.question?.question || "Unknown Question"}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                      <div className="whitespace-pre-wrap mb-4">{answer.answer}</div>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                        <div className="flex items-center">
+                          <span className="mr-1 font-medium">Bar:</span>
+                          <Badge variant="outline">{answer.bar}</Badge>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="mr-1 font-medium">Principle:</span>
+                          <Badge variant="secondary">
+                            {answer.question?.principle ? formatPrinciple(answer.question.principle) : "Unknown"}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">No principle answers available</div>
+            )}
           </CardContent>
         </Card>
 
@@ -662,3 +705,4 @@ export default function InterviewDetailsPage() {
     </div>
   )
 }
+
