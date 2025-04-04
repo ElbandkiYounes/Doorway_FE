@@ -13,17 +13,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Eye, Edit, Trash } from "lucide-react"
 import { technicalQuestionAPI, type TechnicalQuestion } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { QuestionTruncator } from "@/components/question-truncator"
 import { TechnicalQuestionDetails } from "@/components/questions/technical-question-details"
+import { toast } from 'react-toastify'
 
 export function TechnicalQuestionTable() {
   const [questions, setQuestions] = useState<TechnicalQuestion[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedTechnicalQuestionId, setSelectedTechnicalQuestionId] = useState<number | null>(null)
-  const { toast } = useToast()
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -35,34 +34,23 @@ export function TechnicalQuestionTable() {
       } catch (err) {
         console.error("Failed to fetch technical questions:", err)
         setError("Failed to load technical questions. Please try again later.")
-        toast({
-          title: "Error",
-          description: "Failed to load technical questions",
-          variant: "destructive",
-        })
+        toast.error("Failed to load technical questions. Please try again.")
       } finally {
         setLoading(false)
       }
     }
 
     fetchQuestions()
-  }, [toast])
+  }, [])
 
   const handleDelete = async (id: string) => {
     try {
       await technicalQuestionAPI.delete(id)
       setQuestions(questions.filter((question) => question.id.toString() !== id))
-      toast({
-        title: "Success",
-        description: "Technical question deleted successfully",
-      })
-    } catch (err) {
+      toast.success("Technical question deleted successfully")
+    } catch (err: any) {
       console.error("Failed to delete technical question:", err)
-      toast({
-        title: "Error",
-        description: "Failed to delete technical question",
-        variant: "destructive",
-      })
+      toast.error(err.message || "Failed to delete technical question. Please try again.")
     }
   }
 

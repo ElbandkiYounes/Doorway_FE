@@ -7,49 +7,49 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card"
 import { technicalQuestionAPI, type TechnicalQuestion } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from 'react-toastify'
 
 export default function EditTechnicalQuestionPage() {
   const params = useParams()
   const router = useRouter()
-  const { toast } = useToast()
   const [question, setQuestion] = useState<string>("")
   const [loading, setLoading] = useState(true)
   
   useEffect(() => {
+    if (!params.id || typeof params.id !== 'string') {
+      toast.error("Invalid question ID")
+      router.push("/dashboard/questions")
+      return
+    }
+
     const fetchQuestion = async () => {
       try {
-        const data = await technicalQuestionAPI.getById(params.id)
+        const data = await technicalQuestionAPI.getById(params.id as string)
         setQuestion(data.question)
       } catch (error: any) {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to load technical question.",
-          variant: "destructive",
-        })
+        toast.error(error.message || "Failed to load technical question.")
       } finally {
         setLoading(false)
       }
     }
     fetchQuestion()
-  }, [params.id, toast])
+  }, [params.id, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!params.id || typeof params.id !== 'string') {
+      toast.error("Invalid question ID")
+      return
+    }
+
     try {
       setLoading(true)
       await technicalQuestionAPI.update(params.id, { question })
-      toast({
-        title: "Success",
-        description: "Technical question updated successfully",
-      })
+      toast.success("Technical question updated successfully")
       router.push("/dashboard/questions")
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update technical question",
-        variant: "destructive",
-      })
+      console.error("Failed to update technical question:", error)
+      toast.error(error.message || "Failed to update technical question")
     } finally {
       setLoading(false)
     }
@@ -67,7 +67,6 @@ export default function EditTechnicalQuestionPage() {
             <CardDescription>Update your technical question below.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* ...existing form layout... */}
             <div className="space-y-2">
               <Label htmlFor="question">Question</Label>
               <Input
@@ -78,7 +77,15 @@ export default function EditTechnicalQuestionPage() {
               />
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end">
+          <CardFooter className="flex justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/dashboard/questions")}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
             <Button type="submit" disabled={loading}>
               {loading ? "Updating..." : "Update Question"}
             </Button>

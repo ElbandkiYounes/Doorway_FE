@@ -7,9 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { principleQuestionAPI, type PrincipleQuestion } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
-import { Badge } from "@/components/ui/badge"
+import { principleQuestionAPI, ExcellencePrinciple } from "@/lib/api-service"
+import { toast } from 'react-toastify'
 
 // Helper to format principle enum values if needed
 function formatPrinciple(principle: string) {
@@ -22,47 +21,46 @@ function formatPrinciple(principle: string) {
 export default function EditPrincipleQuestionPage() {
   const params = useParams()
   const router = useRouter()
-  const { toast } = useToast()
-  
   const [question, setQuestion] = useState<string>("")
   const [principle, setPrinciple] = useState<string>("")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!params.id || typeof params.id !== 'string') {
+      toast.error("Invalid question ID")
+      router.push("/dashboard/questions")
+      return
+    }
+
     const fetchQuestion = async () => {
       try {
-        const data = await principleQuestionAPI.getById(params.id)
+        const data = await principleQuestionAPI.getById(params.id as string)
         setQuestion(data.question)
         setPrinciple(data.principle)
       } catch (error: any) {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to load principle question.",
-          variant: "destructive",
-        })
+        toast.error(error.message || "Failed to load principle question.")
       } finally {
         setLoading(false)
       }
     }
     fetchQuestion()
-  }, [params.id, toast])
+  }, [params.id, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!params.id || typeof params.id !== 'string') {
+      toast.error("Invalid question ID")
+      return
+    }
+
     try {
       setLoading(true)
       await principleQuestionAPI.update(params.id, { question, principle })
-      toast({
-        title: "Success",
-        description: "Principle question updated successfully",
-      })
-      router.push("/dashboard/questions") // redirect updated
+      toast.success("Principle question updated successfully")
+      router.push("/dashboard/questions")
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update principle question",
-        variant: "destructive",
-      })
+      console.error("Failed to update principle question:", error)
+      toast.error(error.message || "Failed to update principle question")
     } finally {
       setLoading(false)
     }
@@ -80,7 +78,6 @@ export default function EditPrincipleQuestionPage() {
             <CardDescription>Update your principle question details below.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* ...existing form layout... */}
             <div className="space-y-2">
               <Label htmlFor="question">Question</Label>
               <Input
@@ -97,21 +94,24 @@ export default function EditPrincipleQuestionPage() {
                   <SelectValue placeholder="Select a principle" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="IMPACTFUL_DELIVERY">Impactful Delivery</SelectItem>
-                  <SelectItem value="WISE_INSIGHTS">Wise Insights</SelectItem>
-                  <SelectItem value="SIMPLIFIED_INNOVATION">Simplified Innovation</SelectItem>
-                  <SelectItem value="OUTSTANDING_MENTORSHIP">Outstanding Mentorship</SelectItem>
-                  <SelectItem value="OBSESSIVE_AMBITION">Obsessive Ambition</SelectItem>
-                  <SelectItem value="CUSTOMER_DEDICATION">Customer Dedication</SelectItem>
-                  <SelectItem value="DEEP_OWNERSHIP">Deep Ownership</SelectItem>
-                  <SelectItem value="PERFECTIONIST_MASTERY">Perfectionist Mastery</SelectItem>
-                  <SelectItem value="EMPATHIC_INCLUSION">Empathic Inclusion</SelectItem>
-                  <SelectItem value="CONFIDENT_MODESTY">Confident Modesty</SelectItem>
+                  {Object.values(ExcellencePrinciple).map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {formatPrinciple(p)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end">
+          <CardFooter className="flex justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/dashboard/questions")}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
             <Button type="submit" disabled={loading}>
               {loading ? "Updating..." : "Update Question"}
             </Button>

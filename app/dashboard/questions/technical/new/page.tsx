@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -9,41 +8,29 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { technicalQuestionAPI } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from 'react-toastify'
 
 export default function NewTechnicalQuestionPage() {
   const [question, setQuestion] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!question.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Question is required",
-        variant: "destructive",
-      })
+      toast.error("Question is required")
       return
     }
 
     try {
       setLoading(true)
       await technicalQuestionAPI.create({ question })
-      toast({
-        title: "Success",
-        description: "Technical question created successfully",
-      })
+      toast.success("Technical question created successfully")
       router.push("/dashboard/questions")
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to create technical question:", error)
-      toast({
-        title: "Error",
-        description: "Failed to create technical question. Please try again.",
-        variant: "destructive",
-      })
+      toast.error(error.message || "Failed to create technical question. Please try again.")
     } finally {
       setLoading(false)
     }

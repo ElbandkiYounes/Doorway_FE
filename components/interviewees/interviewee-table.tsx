@@ -6,6 +6,14 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -31,6 +39,9 @@ export function IntervieweeTable({ filters }: { filters: any }) {
   const [interviewees, setInterviewees] = useState<Interviewee[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [intervieweeToDelete, setIntervieweeToDelete] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -56,14 +67,13 @@ export function IntervieweeTable({ filters }: { filters: any }) {
     fetchInterviewees()
   }, [toast])
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this interviewee? This action cannot be undone.")) {
-      return
-    }
+  const handleDelete = async () => {
+    if (!intervieweeToDelete) return
 
     try {
-      await intervieweeAPI.delete(id)
-      setInterviewees(interviewees.filter((interviewee) => interviewee.id !== id))
+      setIsDeleting(true)
+      await intervieweeAPI.delete(intervieweeToDelete)
+      setInterviewees(interviewees.filter((interviewee) => interviewee.id !== intervieweeToDelete))
       toast({
         title: "Success",
         description: "Interviewee deleted successfully",
@@ -75,6 +85,10 @@ export function IntervieweeTable({ filters }: { filters: any }) {
         description: "Failed to delete interviewee",
         variant: "destructive",
       })
+    } finally {
+      setIsDeleting(false)
+      setIsDeleteDialogOpen(false)
+      setIntervieweeToDelete(null)
     }
   }
 
@@ -104,121 +118,157 @@ export function IntervieweeTable({ filters }: { filters: any }) {
   }
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Contact</TableHead>
-            <TableHead>School</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredInterviewees.length === 0 ? (
+    <>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-8">
-                No interviewees found. Add your first interviewee to get started.
-              </TableCell>
+              <TableHead>Name</TableHead>
+              <TableHead>Contact</TableHead>
+              <TableHead>School</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          ) : (
-            filteredInterviewees.map((interviewee) => {
-              // Get the decision from the newest interviewing process
-              const status = interviewee.newestInterviewingProcess?.decision || null
+          </TableHeader>
+          <TableBody>
+            {filteredInterviewees.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8">
+                  No interviewees found. Add your first interviewee to get started.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredInterviewees.map((interviewee) => {
+                // Get the decision from the newest interviewing process
+                const status = interviewee.newestInterviewingProcess?.decision || null
 
-              return (
-                <TableRow key={interviewee.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage
-                          src={
-                            interviewee.profilePicture
-                              ? `data:image/jpeg;base64,${interviewee.profilePicture}`
-                              : "/placeholder.svg"
-                          }
-                          alt={interviewee.name}
-                        />
-                        <AvatarFallback>
-                          {interviewee.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{interviewee.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {interviewee.dateOfBirth ? formatDate(new Date(interviewee.dateOfBirth)) : "No DOB"}
+                return (
+                  <TableRow key={interviewee.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage
+                            src={
+                              interviewee.profilePicture
+                                ? `data:image/jpeg;base64,${interviewee.profilePicture}`
+                                : "/placeholder.svg"
+                            }
+                            alt={interviewee.name}
+                          />
+                          <AvatarFallback>
+                            {interviewee.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{interviewee.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {interviewee.dateOfBirth ? formatDate(new Date(interviewee.dateOfBirth)) : "No DOB"}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="text-sm">{interviewee.email}</span>
-                      <span className="text-xs text-muted-foreground">{interviewee.phoneNumber}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{interviewee.school?.name || "N/A"}</TableCell>
-                  <TableCell>
-                    {status ? (
-                      <Badge className={`${statusMap[status]?.badgeClass || ""}`}>
-                        {statusMap[status]?.label || "Unknown"}
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary">No Process Available</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Open menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/interviewees/${interviewee.id}`}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            <span>View Details</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/interviewees/${interviewee.id}/edit`}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            <span>Edit</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <a
-                            href={`data:application/pdf;base64,${interviewee.resume}`}
-                            download={`${interviewee.name.replace(/\s+/g, "_")}_resume.pdf`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="text-sm">{interviewee.email}</span>
+                        <span className="text-xs text-muted-foreground">{interviewee.phoneNumber}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{interviewee.school?.name || "N/A"}</TableCell>
+                    <TableCell>
+                      {status ? (
+                        <Badge className={`${statusMap[status]?.badgeClass || ""}`}>
+                          {statusMap[status]?.label || "Unknown"}
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">No Process Available</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/dashboard/interviewees/${interviewee.id}`}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              <span>View Details</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/dashboard/interviewees/${interviewee.id}/edit`}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              <span>Edit</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <a
+                              href={`data:application/pdf;base64,${interviewee.resume}`}
+                              download={`${interviewee.name.replace(/\s+/g, "_")}_resume.pdf`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <FileText className="mr-2 h-4 w-4" />
+                              <span>Download Resume</span>
+                            </a>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            className="text-destructive" 
+                            onClick={() => {
+                              setIntervieweeToDelete(interviewee.id)
+                              setIsDeleteDialogOpen(true)
+                            }}
                           >
-                            <FileText className="mr-2 h-4 w-4" />
-                            <span>Download Resume</span>
-                          </a>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(interviewee.id)}>
-                          <Trash className="mr-2 h-4 w-4" />
-                          <span>Delete</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              )
-            })
-          )}
-        </TableBody>
-      </Table>
-    </div>
+                            <Trash className="mr-2 h-4 w-4" />
+                            <span>Delete</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Interviewee</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this interviewee? This action cannot be undone
+              and will remove all associated data including interviews and processes.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex space-x-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 

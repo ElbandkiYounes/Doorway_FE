@@ -14,10 +14,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Eye, Edit, Trash } from "lucide-react"
 import { principleQuestionAPI, type PrincipleQuestion } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { QuestionTruncator } from "@/components/question-truncator"
 import { PrincipleQuestionDetails } from "@/components/questions/principle-question-details"
+import { toast } from 'react-toastify'
 
 // Helper function to format principle enum values
 const formatPrinciple = (principle: string) => {
@@ -31,7 +31,6 @@ export function PrincipleQuestionTable() {
   const [questions, setQuestions] = useState<PrincipleQuestion[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { toast } = useToast()
   const [selectedPrincipleQuestionId, setSelectedPrincipleQuestionId] = useState<number | null>(null)
 
   useEffect(() => {
@@ -44,34 +43,23 @@ export function PrincipleQuestionTable() {
       } catch (err) {
         console.error("Failed to fetch principle questions:", err)
         setError("Failed to load principle questions. Please try again later.")
-        toast({
-          title: "Error",
-          description: "Failed to load principle questions",
-          variant: "destructive",
-        })
+        toast.error("Failed to load principle questions. Please try again.")
       } finally {
         setLoading(false)
       }
     }
 
     fetchQuestions()
-  }, [toast])
+  }, [])
 
   const handleDelete = async (id: string) => {
     try {
       await principleQuestionAPI.delete(id)
       setQuestions(questions.filter((question) => question.id.toString() !== id))
-      toast({
-        title: "Success",
-        description: "Principle question deleted successfully",
-      })
-    } catch (err) {
+      toast.success("Principle question deleted successfully")
+    } catch (err: any) {
       console.error("Failed to delete principle question:", err)
-      toast({
-        title: "Error",
-        description: "Failed to delete principle question",
-        variant: "destructive",
-      })
+      toast.error(err.message || "Failed to delete principle question. Please try again.")
     }
   }
 

@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -10,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { principleQuestionAPI, ExcellencePrinciple } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from 'react-toastify'
 
 // Helper function to format principle enum values for display
 const formatPrinciple = (principle: string) => {
@@ -25,17 +24,12 @@ export default function NewPrincipleQuestionPage() {
   const [principle, setPrinciple] = useState<ExcellencePrinciple | "">("")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!question.trim() || !principle) {
-      toast({
-        title: "Validation Error",
-        description: "Question and principle are required",
-        variant: "destructive",
-      })
+      toast.error("Question and principle are required")
       return
     }
 
@@ -45,18 +39,11 @@ export default function NewPrincipleQuestionPage() {
         question,
         principle,
       })
-      toast({
-        title: "Success",
-        description: "Principle question created successfully",
-      })
+      toast.success("Principle question created successfully")
       router.push("/dashboard/questions")
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to create principle question:", error)
-      toast({
-        title: "Error",
-        description: "Failed to create principle question. Please try again.",
-        variant: "destructive",
-      })
+      toast.error(error.message || "Failed to create principle question. Please try again.")
     } finally {
       setLoading(false)
     }
