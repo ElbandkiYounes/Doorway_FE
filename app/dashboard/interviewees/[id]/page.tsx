@@ -76,7 +76,7 @@ export default function IntervieweeDetailsPage() {
       try {
         setLoadingInterviews(true);
         const intervieweeId = params.id as string;
-        const data = await interviewAPI.getAll(intervieweeId, selectedProcessId);
+        const data = await interviewAPI.getAll({}, selectedProcessId, intervieweeId);
         setInterviews(data);
       } catch (err) {
         console.error("Failed to fetch interviews:", err);

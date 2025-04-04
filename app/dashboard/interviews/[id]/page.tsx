@@ -35,6 +35,14 @@ import "prismjs/components/prism-python"
 import "prismjs/components/prism-csharp"
 import "prismjs/components/prism-go"
 import "prismjs/themes/prism-tomorrow.css"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 const statusMap = {
   HIGHLY_INCLINED: { label: "Highly Inclined", badgeClass: "bg-green-500 text-white" },
@@ -94,6 +102,7 @@ export default function InterviewDetailsPage() {
     principleQuestion: { questionId: "", answer: "", bar: "" },
   })
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -143,10 +152,6 @@ export default function InterviewDetailsPage() {
   const handleDelete = async () => {
     if (!interview) return
 
-    if (!confirm("Are you sure you want to delete this interview? This action cannot be undone.")) {
-      return
-    }
-
     setIsDeleting(true)
     try {
       await interviewAPI.delete(interview.id)
@@ -163,6 +168,7 @@ export default function InterviewDetailsPage() {
       toast.error("Failed to delete interview")
     } finally {
       setIsDeleting(false)
+      setIsDeleteDialogOpen(false)
     }
   }
 
@@ -327,6 +333,33 @@ export default function InterviewDetailsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Interview</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this interview? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex space-x-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="mb-6">
         <Button variant="ghost" size="sm" className="mb-4" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Back
@@ -338,7 +371,7 @@ export default function InterviewDetailsPage() {
             <Button variant="outline" asChild>
               <Link href={`/dashboard/interviews/${interview.id}/edit`}>Edit</Link>
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+            <Button variant="destructive" onClick={() => setIsDeleteDialogOpen(true)} disabled={isDeleting}>
               {isDeleting ? "Deleting..." : "Delete"}
             </Button>
           </div>

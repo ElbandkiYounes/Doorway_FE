@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, momentLocalizer } from "react-big-calendar"
+import { Calendar, momentLocalizer, View } from "react-big-calendar"
 import moment from "moment"
 import { interviewAPI, type Interview } from "@/lib/api-service"
 import { useToast } from "@/hooks/use-toast"
@@ -26,7 +26,7 @@ export default function InterviewsPage() {
   const [interviews, setInterviews] = useState<Interview[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [view, setView] = useState("month")
+  const [view, setView] = useState<View>("month")
   const [date, setDate] = useState(new Date())
   const { toast } = useToast()
   const { theme } = useTheme()
@@ -139,57 +139,26 @@ export default function InterviewsPage() {
               components={{
                 event: InterviewCalendarEvent,
               }}
-              className={`px-4 py-2 rounded-b-lg ${
+              className={`px-4 py-2 rounded-b-lg calendar-container ${
                 theme === "dark" 
-                  ? "rbc-dark" 
-                  : ""
+                  ? "calendar-dark" 
+                  : "calendar-light"
               }`}
               dayPropGetter={(date) => {
                 const isToday = moment().isSame(date, "day")
-
-                // Consistent blue styling for current day in both modes
                 if (isToday) {
                   return {
+                    className: 'current-day',
                     style: {
-                      backgroundColor: 'rgba(59, 130, 246, 0.3)', // Consistent blue
-                      color: theme === "dark" ? "#F9FAFB" : "#111827",
                       fontWeight: 'bold',
                     },
                   }
                 }
-
-                // Consistent styling for other days
-                return {
-                  style: {
-                    backgroundColor: theme === "dark" ? "#27272a" : "#ffffff",
-                    color: theme === "dark" ? "#ffffff" : "#000000"
-                  }
-                }
+                return {}
               }}
               eventPropGetter={(event) => ({
-                style: {
-                  backgroundColor: theme === "dark" ? "#1d4ed8" : "#dbeafe",  // Consistent blue in both modes
-                  color: theme === "dark" ? "#ffffff" : "#1e3a8a",
-                  borderRadius: "4px",
-                  border: theme === "dark" ? "1px solid #2563eb" : "1px solid #93c5fd"
-                }
+                className: theme === "dark" ? "event-dark" : "event-light"
               })}
-              // Override default styles for the calendar
-              styles={{
-                toolbar: {
-                  backgroundColor: theme === "dark" ? "#27272a" : "#ffffff",
-                  color: theme === "dark" ? "#ffffff" : "#000000",
-                  padding: "8px"
-                },
-                header: {
-                  backgroundColor: theme === "dark" ? "#27272a" : "#ffffff", 
-                  color: theme === "dark" ? "#ffffff" : "#000000"
-                },
-                day: {
-                  backgroundColor: theme === "dark" ? "#27272a" : "#ffffff",
-                  color: theme === "dark" ? "#e4e4e7" : "#000000"
-                }
-              }}
               popup
               selectable
               onSelectEvent={(event) => {

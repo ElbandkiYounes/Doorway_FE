@@ -171,3 +171,52 @@ body {
     @apply font-medium;
   }
 }
+
+/* Calendar Styles */
+.calendar-container.calendar-dark .rbc-toolbar,
+.calendar-container.calendar-dark .rbc-header,
+.calendar-container.calendar-dark .rbc-time-header,
+.calendar-container.calendar-dark .rbc-time-view,
+.calendar-container.calendar-dark .rbc-month-view {
+  background-color: #27272a;
+  color: #ffffff;
+}
+
+.calendar-container.calendar-dark .rbc-toolbar button {
+  color: #ffffff;
+}
+
+.calendar-container.calendar-dark .rbc-toolbar button:hover {
+  background-color: #3f3f46;
+}
+
+.calendar-container.calendar-dark .rbc-toolbar button.rbc-active {
+  background-color: #3f3f46;
+}
+
+.calendar-container.calendar-light .rbc-toolbar,
+.calendar-container.calendar-light .rbc-header,
+.calendar-container.calendar-light .rbc-time-header,
+.calendar-container.calendar-light .rbc-time-view,
+.calendar-container.calendar-light .rbc-month-view {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.current-day {
+  background-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+.event-dark {
+  background-color: #1d4ed8 !important;
+  color: #ffffff !important;
+  border: 1px solid #2563eb !important;
+  border-radius: 4px;
+}
+
+.event-light {
+  background-color: #dbeafe !important;
+  color: #1e3a8a !important;
+  border: 1px solid #93c5fd !important;
+  border-radius: 4px;
+}
