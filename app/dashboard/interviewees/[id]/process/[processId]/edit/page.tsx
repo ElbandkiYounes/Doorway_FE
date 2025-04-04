@@ -9,14 +9,13 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { roleAPI, interviewingProcessAPI, type Role, type InterviewingProcess } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from 'react-toastify'
 import { Textarea } from "@/components/ui/textarea"
 
 export default function EditInterviewingProcessPage() {
   // Extract intervieweeId and processId from URL parameters
   const { id: intervieweeId, processId } = useParams() as { id: string; processId: string }
   const router = useRouter()
-  const { toast } = useToast()
 
   const [feedback, setFeedback] = useState("")
   const [roleId, setRoleId] = useState<number | "">("")
@@ -41,17 +40,13 @@ export default function EditInterviewingProcessPage() {
         setDecision(process.decision)
       } catch (error) {
         console.error("Failed to fetch process details", error)
-        toast({
-          title: "Error",
-          description: "Failed to load process details",
-          variant: "destructive",
-        })
+        toast.error("Failed to load process details")
       } finally {
         setLoading(false)
       }
     }
     fetchData()
-  }, [processId, toast])
+  }, [processId])
 
   const validate = () => {
     const newErrors: { feedback?: string; roleId?: string; decision?: string } = {}
@@ -63,15 +58,19 @@ export default function EditInterviewingProcessPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!validate()) return
+    if (!validate()) {
+      toast.error("Please fix the errors in the form")
+      return
+    }
+
     try {
       const payload = { feedback, decision, roleId: Number(roleId) }
       await interviewingProcessAPI.update(processId, payload)
-      toast({ title: "Success", description: "Interviewing process updated successfully" })
+      toast.success("Interviewing process updated successfully")
       router.push(`/dashboard/interviewees/${intervieweeId}`)
     } catch (error) {
       console.error("Failed to update process", error)
-      toast({ title: "Error", description: "Failed to update process", variant: "destructive" })
+      toast.error("Failed to update process")
     }
   }
 
@@ -79,11 +78,11 @@ export default function EditInterviewingProcessPage() {
     try {
       setIsDeleting(true)
       await interviewingProcessAPI.delete(processId)
-      toast({ title: "Success", description: "Interviewing process deleted successfully" })
+      toast.success("Interviewing process deleted successfully")
       router.push(`/dashboard/interviewees/${intervieweeId}`)
     } catch (error) {
       console.error("Failed to delete process:", error)
-      toast({ title: "Error", description: "Failed to delete process", variant: "destructive" })
+      toast.error("Failed to delete process")
     } finally {
       setIsDeleting(false)
       setIsDeleteDialogOpen(false)
@@ -111,9 +110,12 @@ export default function EditInterviewingProcessPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
+                <Label htmlFor="role" className={errors.roleId ? "text-destructive" : ""}>
+                  Role
+                  {errors.roleId && <span className="ml-1 text-xs">({errors.roleId})</span>}
+                </Label>
                 <Select value={roleId.toString()} onValueChange={(value) => setRoleId(Number(value))}>
-                  <SelectTrigger>
+                  <SelectTrigger className={errors.roleId ? "border-destructive" : ""}>
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent>
@@ -124,36 +126,36 @@ export default function EditInterviewingProcessPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.roleId && <p className="text-sm text-destructive mt-1">{errors.roleId}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="decision">Decision</Label>
+                <Label htmlFor="decision" className={errors.decision ? "text-destructive" : ""}>
+                  Decision
+                  {errors.decision && <span className="ml-1 text-xs">({errors.decision})</span>}
+                </Label>
                 <Select value={decision} onValueChange={setDecision}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select decision" />
+                  <SelectTrigger className={errors.decision ? "border-destructive" : ""}>
+                    <SelectValue placeholder="Select a decision" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="HIGHLY_INCLINED">Highly Inclined</SelectItem>
-                    <SelectItem value="INCLINED">Inclined</SelectItem>
-                    <SelectItem value="NEUTRAL">Neutral</SelectItem>
-                    <SelectItem value="DECLINED">Declined</SelectItem>
                     <SelectItem value="HIGHLY_DECLINED">Highly Declined</SelectItem>
+                    <SelectItem value="DECLINED">Declined</SelectItem>
+                    <SelectItem value="NEUTRAL">Neutral</SelectItem>
+                    <SelectItem value="INCLINED">Inclined</SelectItem>
+                    <SelectItem value="HIGHLY_INCLINED">Highly Inclined</SelectItem>
                   </SelectContent>
                 </Select>
-                {errors.decision && <p className="text-sm text-destructive mt-1">{errors.decision}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="feedback">Feedback</Label>
+                <Label htmlFor="feedback">Feedback (Optional)</Label>
                 <Textarea
                   id="feedback"
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
-                  rows={4}
-                  placeholder="Enter your feedback about this process..."
+                  placeholder="Add feedback about this process"
+                  className="min-h-[100px]"
                 />
-                {errors.feedback && <p className="text-sm text-destructive mt-1">{errors.feedback}</p>}
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
@@ -164,7 +166,7 @@ export default function EditInterviewingProcessPage() {
               >
                 Cancel
               </Button>
-              <Button type="submit">Update Process</Button>
+              <Button type="submit">Save Changes</Button>
             </CardFooter>
           </form>
         </Card>
@@ -173,10 +175,10 @@ export default function EditInterviewingProcessPage() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Interviewing Process</DialogTitle>
+            <DialogTitle>Delete Process</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete this interviewing process? This action cannot be undone
-              and will remove all associated interviews and their results.
+              and will remove all associated interviews as well.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex space-x-2 justify-end">

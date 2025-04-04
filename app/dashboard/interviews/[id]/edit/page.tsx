@@ -9,28 +9,43 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CalendarIcon } from "lucide-react"
-import { format, parseISO } from "date-fns"
+import { format, parseISO, addDays } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { useToast } from "@/hooks/use-toast"
 import { interviewAPI, interviewerAPI, type Interview, type Interviewer, Decision } from "@/lib/api-service"
+import { toast } from 'react-toastify'
+
+interface FormData {
+  interviewerId: string;
+  scheduledAt: Date;
+  interviewTime: string;
+  decision: string;
+  feedback?: string;
+}
+
+interface FormErrors {
+  [key: string]: string; // Add index signature
+  interviewerId: string;
+  scheduledAt: string;
+  interviewTime: string;
+  decision: string;
+}
 
 export default function EditInterviewPage() {
   const router = useRouter()
   const params = useParams()
-  const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [interviewers, setInterviewers] = useState<Interviewer[]>([])
   const [interview, setInterview] = useState<Interview | null>(null)
-  const [formErrors, setFormErrors] = useState({
+  const [formErrors, setFormErrors] = useState<FormErrors>({
     interviewerId: "",
     scheduledAt: "",
     interviewTime: "",
     decision: "",
   })
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     interviewerId: "",
     scheduledAt: new Date(),
     feedback: "",
@@ -52,11 +67,7 @@ export default function EditInterviewPage() {
         })
       } catch (error) {
         console.error("Failed to fetch interview:", error)
-        toast({
-          title: "Error",
-          description: "Could not load interview details",
-          variant: "destructive",
-        })
+        toast.error("Could not load interview details")
       }
     }
 
@@ -66,34 +77,24 @@ export default function EditInterviewPage() {
         setInterviewers(interviewers)
       } catch (error) {
         console.error("Failed to fetch interviewers:", error)
-        toast({
-          title: "Error",
-          description: "Could not load interviewers",
-          variant: "destructive",
-        })
+        toast.error("Could not load interviewers")
       }
     }
 
     fetchInterview()
     fetchInterviewers()
-  }, [params.id, toast])
+  }, [params.id])
 
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
-    
-    if (formErrors[field]) {
-      setFormErrors(prev => ({
-        ...prev,
-        [field]: ""
-      }))
+  const handleInputChange = (field: keyof FormData, value: string | Date) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    // Clear error when user starts typing
+    if (field in formErrors) {
+      setFormErrors((prev) => ({ ...prev, [field]: "" }))
     }
   }
 
   const validateForm = () => {
-    const errors = {}
+    const errors = { ...formErrors }
     let isValid = true
 
     if (!formData.interviewerId) {
@@ -101,6 +102,17 @@ export default function EditInterviewPage() {
       isValid = false
     }
 
+    if (!formData.scheduledAt) {
+      errors.scheduledAt = "Please select a date"
+      isValid = false
+    }
+
+    if (!formData.interviewTime) {
+      errors.interviewTime = "Please select a time"
+      isValid = false
+    }
+
+    // Check if selected date and time is in the future
     const now = new Date()
     const scheduledDateTime = new Date(formData.scheduledAt)
     const [hours, minutes] = formData.interviewTime.split(":").map(Number)
@@ -114,16 +126,12 @@ export default function EditInterviewPage() {
     setFormErrors(errors)
     return isValid
   }
-
-  const handleSubmit = async (e) => {
+  
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     
     if (!validateForm()) {
-      toast({
-        title: "Form validation failed",
-        description: "Please correct the errors in the form",
-        variant: "destructive",
-      })
+      toast.error("Please correct the errors in the form")
       return
     }
     
@@ -144,22 +152,14 @@ export default function EditInterviewPage() {
       if (interview && interview.interviewingProcess) {
         await interviewAPI.update(interview.id as string, interview.interviewingProcess.intervieweeId, interview.interviewingProcess.id, interviewData)
 
-        toast({
-          title: "Interview updated",
-          description: "The interview has been successfully updated",
-        })
-
+        toast.success("Interview updated successfully")
         router.push(`/dashboard/interviews/${params.id}`)
       } else {
         throw new Error("Interview or interviewing process not found")
       }
     } catch (error) {
       console.error("Failed to update interview:", error)
-      toast({
-        title: "Error",
-        description: "Failed to update the interview",
-        variant: "destructive",
-      })
+      toast.error("Failed to update the interview")
     } finally {
       setIsLoading(false)
     }
@@ -198,9 +198,9 @@ export default function EditInterviewPage() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
-              <Label className="flex justify-between">
+              <Label htmlFor="scheduledAt" className="flex justify-between">
                 <span>Interview Date</span>
                 {formErrors.scheduledAt && (
                   <span className="text-sm text-destructive">{formErrors.scheduledAt}</span>
@@ -225,7 +225,7 @@ export default function EditInterviewPage() {
                     mode="single"
                     selected={formData.scheduledAt}
                     onSelect={(date) => handleInputChange("scheduledAt", date || new Date())}
-                    disabled={(date) => date < new Date().setHours(0, 0, 0, 0)}
+                    disabled={(date) => date < addDays(new Date(), -1)}
                     initialFocus
                   />
                 </PopoverContent>
@@ -292,7 +292,7 @@ export default function EditInterviewPage() {
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Updating..." : "Update Interview"}
+              {isLoading ? "Updating..." : "Save Changes"}
             </Button>
           </CardFooter>
         </Card>

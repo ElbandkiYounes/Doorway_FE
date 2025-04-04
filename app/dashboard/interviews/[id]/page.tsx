@@ -93,6 +93,7 @@ export default function InterviewDetailsPage() {
     technicalQuestion: { questionId: "", answer: "", bar: "", language: "" },
     principleQuestion: { questionId: "", answer: "", bar: "" },
   })
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -146,6 +147,7 @@ export default function InterviewDetailsPage() {
       return
     }
 
+    setIsDeleting(true)
     try {
       await interviewAPI.delete(interview.id)
       toast.success("Interview deleted successfully")
@@ -159,6 +161,8 @@ export default function InterviewDetailsPage() {
     } catch (err) {
       console.error("Failed to delete interview:", err)
       toast.error("Failed to delete interview")
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -334,8 +338,8 @@ export default function InterviewDetailsPage() {
             <Button variant="outline" asChild>
               <Link href={`/dashboard/interviews/${interview.id}/edit`}>Edit</Link>
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Delete
+            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? "Deleting..." : "Delete"}
             </Button>
           </div>
         </div>

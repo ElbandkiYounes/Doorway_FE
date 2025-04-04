@@ -3,18 +3,22 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { roleAPI, interviewingProcessAPI, type Role } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from 'react-toastify'
+import { Textarea } from "@/components/ui/textarea"
 
 export default function NewInterviewingProcessPage() {
-  const { id: intervieweeId } = useParams() // interviewee id
+  const { id: intervieweeId } = useParams() as { id: string }
   const router = useRouter()
-  const { toast } = useToast()
   
   const [feedback, setFeedback] = useState("")
   const [roleId, setRoleId] = useState<number | "">("")
   const [roles, setRoles] = useState<Role[]>([])
   const [errors, setErrors] = useState<{ feedback?: string; roleId?: string }>({})
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const fetchRoles = async () => {
@@ -23,6 +27,7 @@ export default function NewInterviewingProcessPage() {
         setRoles(allRoles)
       } catch (error) {
         console.error("Failed to fetch roles", error)
+        toast.error("Failed to load roles. Please try again.")
       }
     }
     fetchRoles()
@@ -39,53 +44,81 @@ export default function NewInterviewingProcessPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!validate()) return
+    
+    if (!validate()) {
+      toast.error("Please fix the errors in the form")
+      return
+    }
+
     try {
-      const payload = { 
-        feedback: feedback.trim() || null, // Allow empty feedback 
-        decision: "NEUTRAL", 
-        roleId: Number(roleId) 
-      }
-      const newProcess = await interviewingProcessAPI.create(intervieweeId, payload)
-      toast({ title: "Process Created", description: "New interviewing process started." })
+      setLoading(true)
+      await interviewingProcessAPI.create(intervieweeId, {
+        roleId: Number(roleId),
+        feedback,
+      })
+      toast.success("Interviewing process created successfully")
       router.push(`/dashboard/interviewees/${intervieweeId}`)
-    } catch (err) {
-      console.error("Failed to create process:", err)
-      toast({ title: "Error", description: "Failed to create new process", variant: "destructive" })
+    } catch (error: any) {
+      console.error("Failed to create process:", error)
+      toast.error(error.message || "Failed to create interviewing process")
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div className="max-w-xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Create New Interviewing Process</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Feedback (Optional)</label>
-          <textarea
-            className="w-full border rounded p-2"
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-            rows={4}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Select Role</label>
-          <select
-            className="w-full border rounded p-2"
-            value={roleId}
-            onChange={(e) => setRoleId(e.target.value)}
-          >
-            <option value="">-- Select Role --</option>
-            {roles.map((role) => (
-              <option key={role.id} value={role.id}>
-                {role.name}
-              </option>
-            ))}
-          </select>
-          {errors.roleId && <p className="text-sm text-destructive mt-1">{errors.roleId}</p>}
-        </div>
-        <Button type="submit">Create Process</Button>
-      </form>
+    <div className="max-w-2xl mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">New Interviewing Process</h1>
+      <Card>
+        <form onSubmit={handleSubmit}>
+          <CardHeader>
+            <CardTitle>Process Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="role" className={errors.roleId ? "text-destructive" : ""}>
+                Role
+                {errors.roleId && <span className="ml-1 text-xs">({errors.roleId})</span>}
+              </Label>
+              <Select value={roleId.toString()} onValueChange={(value) => setRoleId(Number(value))}>
+                <SelectTrigger className={errors.roleId ? "border-destructive" : ""}>
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((role) => (
+                    <SelectItem key={role.id} value={role.id.toString()}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="feedback">Feedback (Optional)</Label>
+              <Textarea
+                id="feedback"
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                placeholder="Add any initial feedback or notes about the process"
+                className="min-h-[100px]"
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push(`/dashboard/interviewees/${intervieweeId}`)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Creating..." : "Create Process"}
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   )
 }

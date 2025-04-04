@@ -1,25 +1,30 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { MoreHorizontal, Eye } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Eye, Edit, Trash, FileText } from "lucide-react"
-import { formatDate } from "@/lib/utils"
-import { interviewAPI, type Interview } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
+import { interviewAPI, type Interview, type InterviewFilter } from "@/lib/api-service"
+import { toast } from 'react-toastify'
 import Link from "next/link"
+import { formatDate } from "@/lib/utils"
 
-// Update the statusMap to match the new Decision enum values
 const statusMap = {
   SCHEDULED: { label: "Scheduled", variant: "default" },
   COMPLETED: { label: "Completed", variant: "success" },
@@ -40,63 +45,38 @@ const getInterviewStatus = (interview: Interview) => {
   }
 }
 
-export function InterviewTable() {
+export function InterviewTable({ filters = {} }: { filters?: InterviewFilter }) {
   const [interviews, setInterviews] = useState<Interview[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { toast } = useToast()
 
   useEffect(() => {
     const fetchInterviews = async () => {
       try {
         setLoading(true)
-        // This is a simplified approach - in a real app, you might want to fetch all interviews
-        // or provide filters to get interviews for specific interviewees/processes
-        const allProcesses = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/interviewing-processes`).then((res) =>
-          res.json(),
-        )
-
-        let allInterviews: Interview[] = []
-        for (const process of allProcesses) {
-          if (process.intervieweeId && process.id) {
-            const processInterviews = await interviewAPI.getAll(process.intervieweeId, process.id)
-            allInterviews = [...allInterviews, ...processInterviews]
-          }
-        }
-
+        const allInterviews = await interviewAPI.getAll(filters)
         setInterviews(allInterviews)
         setError(null)
       } catch (err) {
         console.error("Failed to fetch interviews:", err)
         setError("Failed to load interviews. Please try again later.")
-        toast({
-          title: "Error",
-          description: "Failed to load interviews",
-          variant: "destructive",
-        })
+        toast.error("Failed to load interviews")
       } finally {
         setLoading(false)
       }
     }
 
     fetchInterviews()
-  }, [toast])
+  }, [filters])
 
   const handleDelete = async (id: string) => {
     try {
       await interviewAPI.delete(id)
       setInterviews(interviews.filter((interview) => interview.id !== id))
-      toast({
-        title: "Success",
-        description: "Interview cancelled successfully",
-      })
+      toast.success("Interview cancelled successfully")
     } catch (err) {
       console.error("Failed to cancel interview:", err)
-      toast({
-        title: "Error",
-        description: "Failed to cancel interview",
-        variant: "destructive",
-      })
+      toast.error("Failed to cancel interview")
     }
   }
 
@@ -163,7 +143,12 @@ export function InterviewTable() {
                             : "UN"}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="font-medium">{interviewee?.name || "Unknown"}</div>
+                      <div>
+                        <div className="font-medium">{interviewee?.name || "Unknown"}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {interviewee?.email || "No email"}
+                        </div>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -186,10 +171,21 @@ export function InterviewTable() {
                             : "UN"}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="font-medium">{interview.interviewer?.name || "Unknown"}</div>
+                      <div>
+                        <div className="font-medium">{interview.interviewer?.name || "Unknown"}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {interview.interviewer?.email || "No email"}
+                        </div>
+                      </div>
                     </div>
                   </TableCell>
-                  <TableCell>{role?.name || "Unknown"}</TableCell>
+                  <TableCell>
+                    {role?.name ? (
+                      <Badge variant="outline">{role.name}</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">No role</span>
+                    )}
+                  </TableCell>
                   <TableCell>{formatDate(new Date(interview.scheduledAt))}</TableCell>
                   <TableCell>
                     <Badge variant={(statusMap[status]?.variant as any) || "default"}>
@@ -213,26 +209,15 @@ export function InterviewTable() {
                           </Link>
                         </DropdownMenuItem>
                         {status === "SCHEDULED" && (
-                          <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/interviews/${interview.id}/edit`}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              <span>Edit</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        )}
-                        {status === "COMPLETED" && (
-                          <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/interviews/${interview.id}/feedback`}>
-                              <FileText className="mr-2 h-4 w-4" />
-                              <span>View Feedback</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        {status === "SCHEDULED" && (
-                          <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(interview.id)}>
-                            <Trash className="mr-2 h-4 w-4" />
-                            <span>Cancel</span>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              if (window.confirm("Are you sure you want to cancel this interview?")) {
+                                handleDelete(interview.id)
+                              }
+                            }}
+                            className="text-destructive"
+                          >
+                            Cancel Interview
                           </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>

@@ -13,74 +13,83 @@ import { format, addDays } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { useToast } from "@/hooks/use-toast"
-import { interviewAPI, interviewerAPI } from "@/lib/api-service"
+import { interviewAPI, interviewerAPI, type Interviewer } from "@/lib/api-service"
+import { toast } from 'react-toastify'
+
+interface FormData {
+  interviewerId: string;
+  scheduledAt: Date;
+  feedback: string;
+  interviewTime: string;
+}
+
+interface FormErrors {
+  [key: string]: string; // Add index signature
+  interviewerId: string;
+  scheduledAt: string;
+  interviewTime: string;
+}
 
 export default function NewInterviewPage() {
   const router = useRouter()
   const params = useParams()
-  const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
-  const [interviewers, setInterviewers] = useState([])
-  const [formErrors, setFormErrors] = useState({
+  const [interviewers, setInterviewers] = useState<Interviewer[]>([])
+  const [formErrors, setFormErrors] = useState<FormErrors>({
     interviewerId: "",
     scheduledAt: "",
     interviewTime: "",
   })
-  
-  const [formData, setFormData] = useState({
+
+  const [formData, setFormData] = useState<FormData>({
     interviewerId: "",
-    scheduledAt: addDays(new Date(), 1), // Default to tomorrow
-    feedback: "", // Changed from notes to feedback
-    interviewTime: "12:00", // Default time
+    scheduledAt: new Date(),
+    feedback: "",
+    interviewTime: "12:00",
   })
 
-  // Fetch available interviewers when component mounts
   useEffect(() => {
     const fetchInterviewers = async () => {
       try {
-        const interviewers = await interviewerAPI.getAll()
-        // Filter users who can be interviewers if needed
-        setInterviewers(interviewers)
+        const data = await interviewerAPI.getAll()
+        setInterviewers(data)
       } catch (error) {
         console.error("Failed to fetch interviewers:", error)
-        toast({
-          title: "Error",
-          description: "Could not load interviewers",
-          variant: "destructive",
-        })
+        toast.error("Could not load interviewers")
       }
     }
 
     fetchInterviewers()
-  }, [toast])
+  }, [])
 
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
-    
-    // Clear error when field is changed
-    if (formErrors[field]) {
-      setFormErrors(prev => ({
-        ...prev,
-        [field]: ""
-      }))
+  const handleInputChange = (field: keyof FormData, value: string | Date) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    // Clear error when user starts typing
+    if (field in formErrors) {
+      setFormErrors((prev) => ({ ...prev, [field]: "" }))
     }
   }
 
   const validateForm = () => {
-    const errors = {}
+    const errors = { ...formErrors }
     let isValid = true
 
-    // Validate interviewer
     if (!formData.interviewerId) {
       errors.interviewerId = "Please select an interviewer"
       isValid = false
     }
 
-    // Validate date (not in the past)
+    if (!formData.scheduledAt) {
+      errors.scheduledAt = "Please select a date"
+      isValid = false
+    }
+
+    if (!formData.interviewTime) {
+      errors.interviewTime = "Please select a time"
+      isValid = false
+    }
+
+    // Check if selected date and time is in the future
     const now = new Date()
     const scheduledDateTime = new Date(formData.scheduledAt)
     const [hours, minutes] = formData.interviewTime.split(":").map(Number)
@@ -94,16 +103,12 @@ export default function NewInterviewPage() {
     setFormErrors(errors)
     return isValid
   }
-
-  const handleSubmit = async (e) => {
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!validateForm()) {
-      toast({
-        title: "Form validation failed",
-        description: "Please correct the errors in the form",
-        variant: "destructive",
-      })
+      toast.error("Please correct the errors in the form")
       return
     }
     
@@ -118,30 +123,16 @@ export default function NewInterviewPage() {
       const interviewData = {
         interviewerId: formData.interviewerId,
         scheduledAt: dateTime.toISOString(),
-        feedback: formData.feedback || null, // Changed from notes to feedback
+        feedback: formData.feedback || null,
       }
 
-      // Use the correct API function with interviewee ID and process ID params
       await interviewAPI.create(params.id as string, params.processId as string, interviewData)
 
-      toast({
-        title: "Interview scheduled",
-        description: "The interview has been successfully scheduled",
-      })
-
-      // Navigate back to the interviewee details page
+      toast.success("Interview scheduled successfully")
       router.push(`/dashboard/interviewees/${params.id}`)
     } catch (error) {
       console.error("Failed to schedule interview:", error)
-      
-      // Handle specific API errors if available
-      const errorMessage = error.response?.data?.message || error.message || "Failed to schedule the interview";
-      
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      })
+      toast.error("Failed to schedule the interview")
     } finally {
       setIsLoading(false)
     }
@@ -180,9 +171,9 @@ export default function NewInterviewPage() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
-              <Label className="flex justify-between">
+              <Label htmlFor="scheduledAt" className="flex justify-between">
                 <span>Interview Date</span>
                 {formErrors.scheduledAt && (
                   <span className="text-sm text-destructive">{formErrors.scheduledAt}</span>
@@ -207,7 +198,7 @@ export default function NewInterviewPage() {
                     mode="single"
                     selected={formData.scheduledAt}
                     onSelect={(date) => handleInputChange("scheduledAt", date || new Date())}
-                    disabled={(date) => date < new Date().setHours(0, 0, 0, 0)}
+                    disabled={(date) => date < addDays(new Date(), -1)}
                     initialFocus
                   />
                 </PopoverContent>
@@ -231,10 +222,10 @@ export default function NewInterviewPage() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="feedback">Feedback (Optional)</Label>
+              <Label htmlFor="feedback">Special Requirements (Optional)</Label>
               <Textarea
                 id="feedback"
-                placeholder="Add any special requirements or feedback for this interview"
+                placeholder="Add any special requirements or notes for this interview"
                 value={formData.feedback}
                 onChange={(e) => handleInputChange("feedback", e.target.value)}
                 rows={4}

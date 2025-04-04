@@ -149,9 +149,19 @@ export const interviewerAPI = {
 }
 
 // Interview API
+export interface InterviewFilter {
+  status?: string;
+  date?: string;
+  interviewer?: string;
+}
+
 export const interviewAPI = {
-  getAll: async (intervieweeId: string, processId: string) => {
-    return fetchAPI<Interview[]>(`/interviewee/${intervieweeId}/interviewing-process/${processId}/interviews`)
+  getAll: async (filter: InterviewFilter, processId: string) => {
+    const queryParams = new URLSearchParams();
+    if (filter.status) queryParams.append("status", filter.status);
+    if (filter.date) queryParams.append("date", filter.date);
+    if (filter.interviewer) queryParams.append("interviewer", filter.interviewer);
+    return fetchAPI<Interview[]>(`/interviewing-process/${processId}/interviews?${queryParams.toString()}`);
   },
   getAllInterviews: async () => {
     return fetchAPI<Interview[]>("/interviews");
