@@ -16,30 +16,34 @@ async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise
     defaultHeaders["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
-  });
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...defaultHeaders,
+        ...options.headers,
+      },
+    });
 
-  if (!response.ok) {
-    let errorMessage = `API request failed with status ${response.status}`;
-    try {
+    if (!response.ok) {
       const errorData = await response.json();
-      errorMessage = errorData.message || errorMessage;
-    } catch (e) {
-      // If parsing JSON fails, use the default error message
+      if (errorData.message && errorData.message.includes("JWT expired")) {
+        console.error("JWT expired. Logging out...");
+        localStorage.clear();
+        window.location.href = "/login"; // Redirect to login page
+      }
+      throw new Error(errorData.message || `API request failed with status ${response.status}`);
     }
-    throw new Error(errorMessage);
-  }
 
-  if (response.status === 204) {
-    return {} as T;
-  }
+    if (response.status === 204) {
+      return {} as T;
+    }
 
-  return response.json();
+    return response.json();
+  } catch (error) {
+    console.error("API fetch error:", error);
+    throw error;
+  }
 }
 
 // Form data fetch for multipart/form-data requests

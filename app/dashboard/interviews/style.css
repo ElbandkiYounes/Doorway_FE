@@ -1,0 +1,146 @@
+/* Add these styles to your globals.css or create a new CSS file and import it */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s forwards;
+}
+
+/* Glassmorphism calendar styles */
+.glassmorphism-calendar {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Light mode calendar */
+.calendar-light {
+  color: #333;
+}
+
+/* Dark mode calendar */
+.calendar-dark {
+  color: white;
+}
+
+/* Override react-big-calendar styles for dark mode (glassmorphism) */
+.calendar-dark.glassmorphism-calendar .rbc-header {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 8px;
+}
+
+.calendar-dark.glassmorphism-calendar .rbc-time-header,
+.calendar-dark.glassmorphism-calendar .rbc-time-view,
+.calendar-dark.glassmorphism-calendar .rbc-month-view {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.calendar-dark.glassmorphism-calendar .rbc-day-bg {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.calendar-dark.glassmorphism-calendar .rbc-time-content {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.calendar-dark.glassmorphism-calendar .rbc-time-content > * + * > * {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.calendar-dark.glassmorphism-calendar .rbc-today {
+  background-color: rgba(59, 130, 246, 0.2);
+}
+
+.calendar-dark.glassmorphism-calendar .rbc-time-slot {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Light mode calendar styles */
+.calendar-light.glassmorphism-calendar .rbc-header {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #333;
+  padding: 8px;
+}
+
+.calendar-light.glassmorphism-calendar .rbc-time-header,
+.calendar-light.glassmorphism-calendar .rbc-time-view,
+.calendar-light.glassmorphism-calendar .rbc-month-view {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.calendar-light.glassmorphism-calendar .rbc-day-bg {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.calendar-light.glassmorphism-calendar .rbc-time-content {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.calendar-light.glassmorphism-calendar .rbc-time-content > * + * > * {
+  border-color: rgba(0, 0, 0, 0.05);
+}
+
+.calendar-light.glassmorphism-calendar .rbc-today {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.calendar-light.glassmorphism-calendar .rbc-time-slot {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+/* Common styles */
+.glassmorphism-calendar .rbc-current-time-indicator {
+  background-color: #3b82f6;
+}
+
+.glassmorphism-calendar .rbc-event {
+  border-radius: 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.glassmorphism-calendar .rbc-event:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+.current-day {
+  font-weight: bold;
+  color: #3b82f6;
+}
+
+/* Event styles */
+.event-dark {
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: rgba(59, 130, 246, 0.7);
+  color: white;
+}
+
+.event-light {
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: rgba(59, 130, 246, 0.8);
+  color: white;
+}
+
+/* Additional styles for layout adjustments */
+.flex-1 {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.h-full {
+  height: 100%;
+}
