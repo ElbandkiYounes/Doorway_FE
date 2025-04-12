@@ -48,18 +48,38 @@ export const authService = {
     }
   },
   
-  // Check if token is valid
+  // Check if token is valid by fetching the current user
+  // We use the /api/me endpoint which returns the current user info based on the token
   validateToken: async (token: string): Promise<boolean> => {
     try {
-      // You might want to update this to match your backend's token validation endpoint
-      const response = await axios.get(`${API_URL}/auth/validate-token`, {
+      // Use the /api/me endpoint instead of a non-existent validate-token endpoint
+      const response = await axios.get(`${API_URL}/api/me`, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`
+        },
+        // Add timeout to prevent long waiting times if the backend is down
+        timeout: 5000
       });
       return response.status === 200;
     } catch (error) {
-      return false;
+      // Check for network errors vs. actual auth errors
+      if (axios.isAxiosError(error)) {
+        // If it's a network error (backend down), don't invalidate the token
+        if (!error.response) {
+          console.warn('Network error during token validation, assuming token is still valid');
+          return true;
+        }
+        
+        // Only return false for auth-related errors (401, 403)
+        if (error.response.status === 401 || error.response.status === 403) {
+          console.warn('Token validation failed with status:', error.response.status);
+          return false;
+        }
+      }
+      
+      // For other errors, assume token is valid to prevent unnecessary logouts
+      console.warn('Error during token validation, assuming token is still valid:', error);
+      return true;
     }
   }
 };
