@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { config } from './config';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_URL = config.apiUrl;
 
 interface LoginCredentials {
   email: string;

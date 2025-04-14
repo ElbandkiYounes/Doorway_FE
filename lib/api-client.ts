@@ -1,7 +1,7 @@
 import axios from 'axios';
+import { config } from './config';
 
-// Updated to match the base URL without the /api path
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_URL = config.apiUrl;
 
 // Create API client instance
 const apiClient = axios.create({

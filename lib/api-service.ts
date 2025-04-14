@@ -1,5 +1,7 @@
-// Base API URL - using localhost for development
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+import { config } from './config';
+
+// Base API URL - using environment variable
+const API_BASE_URL = `${config.apiUrl}/api`;
 
 // Generic fetch function with error handling and auth token
 async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
