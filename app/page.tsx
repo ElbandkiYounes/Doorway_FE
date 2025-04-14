@@ -1,28 +1,28 @@
 "use client";
 
+import { HeroSection } from "@/components/landing/hero-section";
+import { FeaturesSection } from "@/components/landing/features-section";
+import { StatsSection } from "@/components/landing/stats-section";
+import { HowItWorks } from "@/components/landing/how-it-works";
+import { NavBar } from "@/components/landing/nav-bar";
+import { useAuth } from "@/lib/auth-context";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
 
 export default function Home() {
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
-  const { isAuthenticated, loading } = useAuth();
 
-  useEffect(() => {
-    if (!loading) {
-      if (isAuthenticated) {
-        router.replace("/dashboard");
-      } else {
-        router.replace("/login");
-      }
-    }
-  }, [isAuthenticated, loading, router]);
-
-  // Show loading state while checking authentication
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-    </div>
+    <>
+      <NavBar />
+      <main>
+        <HeroSection />
+        <StatsSection />
+        <FeaturesSection />
+        <HowItWorks />
+      </main>
+    </>
   );
 }
 
