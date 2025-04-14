@@ -7,24 +7,24 @@ export function NavBar() {
   const { isAuthenticated, loading } = useAuth();
 
   return (
-    <nav className="border-b">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="font-bold text-xl">
+    <nav className="border-b h-12">
+      <div className="container mx-auto px-4 h-full flex items-center justify-between">
+        <Link href="/" className="font-bold text-lg">
           Doorway
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <ModeToggle />
           {!loading && (
             <>
               {isAuthenticated ? (
                 <Link href="/dashboard">
-                  <Button variant="default">
+                  <Button variant="default" size="sm">
                     Tableau de bord
                   </Button>
                 </Link>
               ) : (
                 <Link href="/login">
-                  <Button variant="outline">
+                  <Button variant="outline" size="sm">
                     Connexion
                   </Button>
                 </Link>
