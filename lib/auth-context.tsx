@@ -8,7 +8,6 @@ interface User {
   id: string;
   email: string;
   role: string;
-  // Add other user properties as needed
 }
 
 interface AuthContextType {
@@ -32,28 +31,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Validate token and set auth state
   const validateAndSetToken = async (storedToken: string, storedUser: string) => {
     try {
-      // Set token and user initially without validation to prevent flickering
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      
-      // Then validate in background
       const isValid = await authService.validateToken(storedToken);
       
       if (!isValid) {
-        // Token is invalid, clear localStorage
+        // Token is invalid, clear everything immediately
         console.warn('Stored token is invalid, clearing authentication state');
-        localStorage.removeItem('doorway_token');
-        localStorage.removeItem('doorway_user');
-        setToken(null);
-        setUser(null);
-        router.push('/login');
+        clearAuthState();
+        return;
       }
+
+      // Only set token and user if validation succeeds
+      setToken(storedToken);
+      setUser(JSON.parse(storedUser));
+      
     } catch (error) {
       console.error('Error validating token', error);
-      // Don't clear token on validation errors - only on explicit invalid responses
+      // On any error, clear the auth state to be safe
+      clearAuthState();
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to clear authentication state
+  const clearAuthState = () => {
+    localStorage.removeItem('doorway_token');
+    localStorage.removeItem('doorway_user');
+    setToken(null);
+    setUser(null);
+    router.replace('/login');
   };
 
   // Initialize auth state from localStorage on component mount
@@ -65,24 +71,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       validateAndSetToken(storedToken, storedUser);
     } else {
       setLoading(false);
+      if (window.location.pathname !== '/login') {
+        router.replace('/login');
+      }
     }
   }, []);
 
   // Add function to validate current token
   const validateCurrentToken = async (): Promise<boolean> => {
-    if (!token) return false;
+    if (!token) {
+      clearAuthState();
+      return false;
+    }
     
     try {
       const isValid = await authService.validateToken(token);
       if (!isValid) {
-        // Token is invalid, clear state and redirect
-        logout();
+        clearAuthState();
       }
       return isValid;
     } catch (error) {
       console.error('Error validating token', error);
-      // Don't log out automatically on network errors
-      return true; // Assume token is valid if there's an error checking it
+      clearAuthState();
+      return false;
     }
   };
 
@@ -92,22 +103,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('doorway_user', JSON.stringify(userData));
     setToken(newToken);
     setUser(userData);
-    router.push('/dashboard'); // Redirect to dashboard after login
+    router.replace('/dashboard');
   };
 
   // Logout function - clear token and user data
   const logout = () => {
-    localStorage.removeItem('doorway_token');
-    localStorage.removeItem('doorway_user');
-    setToken(null);
-    setUser(null);
-    router.push('/login');
+    clearAuthState();
   };
 
   const value = {
     user,
     token,
-    isAuthenticated: !!token,
+    isAuthenticated: !!token && !!user,
     login,
     logout,
     loading,

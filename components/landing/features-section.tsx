@@ -3,23 +3,23 @@ import { Users, Calendar, FileSpreadsheet, Video } from "lucide-react";
 
 const features = [
   {
-    title: "Gestion des Candidats",
-    description: "Suivez facilement les profils et CV des candidats.",
+    title: "Candidate Management",
+    description: "Easily track profiles and resumes.",
     icon: Users
   },
   {
-    title: "Planification",
-    description: "Organisez les entretiens avec notifications automatiques.",
+    title: "Scheduling",
+    description: "Organize interviews with automatic notifications.",
     icon: Calendar
   },
   {
-    title: "Évaluation",
-    description: "Utilisez des questionnaires prédéfinis pour évaluer.",
+    title: "Assessment",
+    description: "Use predefined questionnaires to evaluate.",
     icon: FileSpreadsheet
   },
   {
-    title: "Entretiens Vidéo",
-    description: "Conduisez des entretiens à distance facilement.",
+    title: "Video Interviews",
+    description: "Conduct remote interviews easily.",
     icon: Video
   }
 ];
@@ -29,7 +29,7 @@ export function FeaturesSection() {
     <section className="h-full flex items-center">
       <div className="container mx-auto px-4">
         <h2 className="text-2xl font-bold text-center mb-6">
-          Fonctionnalités Principales
+          Key Features
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {features.map((feature, index) => (

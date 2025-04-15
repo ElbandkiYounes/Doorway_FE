@@ -2,20 +2,20 @@ import { Steps } from "lucide-react";
 
 const steps = [
   {
-    title: "Créez votre compte",
-    description: "Configurez votre profil professionnel"
+    title: "Create Account",
+    description: "Set up your professional profile"
   },
   {
-    title: "Ajoutez des candidats",
-    description: "Importez les profils et CV"
+    title: "Add Candidates",
+    description: "Import profiles and resumes"
   },
   {
-    title: "Planifiez",
-    description: "Organisez vos sessions d'entretien"
+    title: "Schedule",
+    description: "Organize interview sessions"
   },
   {
-    title: "Évaluez",
-    description: "Utilisez nos grilles d'évaluation"
+    title: "Evaluate",
+    description: "Use our assessment grids"
   }
 ];
 
@@ -24,7 +24,7 @@ export function HowItWorks() {
     <section className="h-full flex items-center bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold">Comment ça marche ?</h2>
+          <h2 className="text-2xl font-bold">How it Works</h2>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {steps.map((step, index) => (

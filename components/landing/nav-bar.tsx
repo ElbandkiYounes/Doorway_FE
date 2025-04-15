@@ -19,13 +19,13 @@ export function NavBar() {
               {isAuthenticated ? (
                 <Link href="/dashboard">
                   <Button variant="default" size="sm">
-                    Tableau de bord
+                    Dashboard
                   </Button>
                 </Link>
               ) : (
                 <Link href="/login">
                   <Button variant="outline" size="sm">
-                    Connexion
+                    Login
                   </Button>
                 </Link>
               )}

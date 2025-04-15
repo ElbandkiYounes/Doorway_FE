@@ -12,23 +12,23 @@ export function HeroSection() {
       <div className="text-center px-4">
         <div className="space-y-4 max-w-3xl mx-auto">
           <h1 className="text-3xl md:text-5xl font-bold tracking-tighter">
-            Simplifiez vos <span className="text-primary">entretiens d'embauche</span>
+            Simplify your <span className="text-primary">job interviews</span>
           </h1>
           <p className="text-base md:text-lg text-muted-foreground max-w-[600px] mx-auto">
-            Doorway centralise vos processus de recrutement en un seul endroit accessible et organisé.
+            Doorway centralizes your recruitment process in one accessible and organized place.
           </p>
           <div className="flex justify-center items-center gap-4">
             {isAuthenticated ? (
               <Link href="/dashboard">
                 <Button size="lg" className="gap-2">
-                  Accéder au tableau de bord
+                  Access Dashboard
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
             ) : (
               <Link href="/login">
                 <Button size="lg" className="gap-2">
-                  Commencer maintenant
+                  Get Started
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
