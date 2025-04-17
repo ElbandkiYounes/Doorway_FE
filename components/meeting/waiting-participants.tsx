@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Check, X, Bell, BellOff } from "lucide-react";
+import { Check, X, Bell, BellOff, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "react-toastify";
@@ -16,9 +16,9 @@ export interface WaitingParticipant {
 
 interface WaitingParticipantsProps {
   participants: WaitingParticipant[];
-  onAdmit: (participantId: string) => void;
-  onReject: (participantId: string) => void;
-  onAdmitAll?: () => void;
+  onAdmit: (participantId: string) => Promise<void>;
+  onReject: (participantId: string) => Promise<void>;
+  onAdmitAll?: () => Promise<void>;
 }
 
 export function WaitingParticipants({ 
@@ -31,44 +31,112 @@ export function WaitingParticipants({
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [previousCount, setPreviousCount] = useState(participants.length);
   
+  // Track loading states for each participant
+  const [pendingActions, setPendingActions] = useState<Record<string, 'admitting' | 'rejecting' | null>>({});
+  const [isAdmittingAll, setIsAdmittingAll] = useState(false);
+
+  // Track admitted and rejected participants
+  const [admittedParticipants, setAdmittedParticipants] = useState<WaitingParticipant[]>([]);
+  const [rejectedParticipants, setRejectedParticipants] = useState<Set<string>>(new Set());
+  const [waitingParticipants, setWaitingParticipants] = useState<WaitingParticipant[]>([]);
+
+  // Update waitingParticipants when participants prop changes
+  useEffect(() => {
+    const updatedWaitingParticipants = participants.filter(
+      (p) => 
+        !admittedParticipants.some((ap) => ap.id === p.id) && 
+        !rejectedParticipants.has(p.id) &&
+        !pendingActions[p.id]
+    );
+    setWaitingParticipants(updatedWaitingParticipants);
+  }, [participants, admittedParticipants, rejectedParticipants, pendingActions]);
+
   // Handle notification for new participants
   useEffect(() => {
-    if (participants.length > previousCount && notificationsEnabled) {
+    if (waitingParticipants.length > previousCount && notificationsEnabled) {
       // Play notification sound
       const audio = new Audio('/sounds/notification.mp3');
       audio.play().catch(err => console.log('Could not play notification sound', err));
       
       // Show toast notification
-      const newParticipants = participants.length - previousCount;
+      const newParticipants = waitingParticipants.length - previousCount;
       toast.info(
         `${newParticipants} ${newParticipants === 1 ? 'person' : 'people'} joined the waiting room`, 
         { autoClose: 3000 }
       );
-      
-      // Try to send desktop notification if permitted
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Doorway Meeting', {
-          body: `${newParticipants} ${newParticipants === 1 ? 'person' : 'people'} waiting to join`,
-          icon: '/logo.png'
-        });
-      }
     }
     
-    setPreviousCount(participants.length);
-  }, [participants.length, previousCount, notificationsEnabled]);
+    setPreviousCount(waitingParticipants.length);
+  }, [waitingParticipants.length, previousCount, notificationsEnabled]);
   
-  // Request notification permission
-  const requestNotificationPermission = async () => {
-    if ('Notification' in window && Notification.permission !== 'granted') {
-      await Notification.requestPermission();
+  // Handle admit action with loading state and better error handling
+  const handleAdmit = async (participantId: string) => {
+    try {
+      // Set loading state
+      setPendingActions(prev => ({...prev, [participantId]: 'admitting'}));
+      
+      // Call the provided onAdmit function
+      await onAdmit(participantId);
+
+      // Move participant to admitted list
+      const admittedParticipant = waitingParticipants.find(p => p.id === participantId);
+      if (admittedParticipant) {
+        setAdmittedParticipants(prev => [...prev, admittedParticipant]);
+      }
+
+      // Remove participant from waiting list
+      setWaitingParticipants(prev => prev.filter(p => p.id !== participantId));
+    } catch (error) {
+      console.error("Error admitting participant:", error);
+      toast.error(`Failed to admit participant: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      // Clear loading state
+      setPendingActions(prev => ({...prev, [participantId]: null}));
     }
   };
   
-  useEffect(() => {
-    requestNotificationPermission();
-  }, []);
+  // Handle reject action with loading state and better error handling
+  const handleReject = async (participantId: string) => {
+    try {
+      // Set loading state
+      setPendingActions(prev => ({...prev, [participantId]: 'rejecting'}));
+      
+      // Call the provided onReject function
+      await onReject(participantId);
+
+      // Add participant to rejected list
+      setRejectedParticipants(prev => new Set(prev).add(participantId));
+
+      // Remove participant from waiting list
+      setWaitingParticipants(prev => prev.filter(p => p.id !== participantId));
+    } catch (error) {
+      console.error("Error rejecting participant:", error);
+      toast.error(`Failed to reject participant: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      // Clear loading state
+      setPendingActions(prev => ({...prev, [participantId]: null}));
+    }
+  };
   
-  if (participants.length === 0) {
+  // Handle admit all with loading state
+  const handleAdmitAll = async () => {
+    if (!onAdmitAll) return;
+    
+    try {
+      setIsAdmittingAll(true);
+      await onAdmitAll();
+
+      // Move all participants to admitted list
+      setAdmittedParticipants(prev => [...prev, ...waitingParticipants]);
+      setWaitingParticipants([]);
+    } catch (error) {
+      console.error("Error admitting all participants:", error);
+    } finally {
+      setIsAdmittingAll(false);
+    }
+  };
+  
+  if (waitingParticipants.length === 0 && admittedParticipants.length === 0) {
     return null;
   }
   
@@ -85,7 +153,7 @@ export function WaitingParticipants({
             variant="destructive"
             className="absolute -top-2 -right-2 w-6 h-6 flex items-center justify-center"
           >
-            {participants.length}
+            {waitingParticipants.length}
           </Badge>
         </div>
       </div>
@@ -102,7 +170,7 @@ export function WaitingParticipants({
               variant="secondary"
               className="ml-2 bg-primary/10 text-primary"
             >
-              {participants.length}
+              {waitingParticipants.length}
             </Badge>
           </span>
         </div>
@@ -126,60 +194,120 @@ export function WaitingParticipants({
         </div>
       </div>
       
-      <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-        {participants.map((participant) => (
-          <div 
-            key={participant.id} 
-            className="flex items-center justify-between p-2 rounded-md bg-accent/40 hover:bg-accent/60 transition-colors"
-          >
-            <div className="flex items-center space-x-3">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={participant.avatar} />
-                <AvatarFallback>
-                  {participant.name ? participant.name.charAt(0).toUpperCase() : "?"}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <span className="text-sm font-medium block">
-                  {participant.name || `Guest ${participant.id.substring(0, 4)}`}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  Waiting {formatWaitingTime(participant.joinedAt)}
-                </span>
-              </div>
-            </div>
-            
-            <div className="flex space-x-1">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-7 w-7 rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20 hover:text-green-600"
-                onClick={() => onAdmit(participant.id)}
-              >
-                <Check className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-7 w-7 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600"
-                onClick={() => onReject(participant.id)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+      <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+        {/* Waiting Participants Section */}
+        {waitingParticipants.length > 0 && (
+          <div>
+            <h3 className="text-sm font-medium mb-2">Waiting Participants</h3>
+            {waitingParticipants.map((participant) => {
+              const isPending = pendingActions[participant.id] !== undefined && pendingActions[participant.id] !== null;
+              const isAdmitting = pendingActions[participant.id] === 'admitting';
+              const isRejecting = pendingActions[participant.id] === 'rejecting';
+              
+              return (
+                <div 
+                  key={participant.id} 
+                  className={`flex items-center justify-between p-2 rounded-md ${isPending ? 'bg-muted' : 'bg-accent/40 hover:bg-accent/60'} transition-colors`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={participant.avatar} />
+                      <AvatarFallback>
+                        {participant.name ? participant.name.charAt(0).toUpperCase() : "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <span className="text-sm font-medium block">
+                        {participant.name || `Guest ${participant.id.substring(0, 4)}`}
+                        {isPending && (
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            {isAdmitting ? "Admitting..." : "Rejecting..."}
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Waiting {formatWaitingTime(participant.joinedAt)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-7 w-7 rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20 hover:text-green-600 transition-colors"
+                      onClick={() => handleAdmit(participant.id)}
+                      disabled={isPending || isAdmittingAll}
+                    >
+                      {isAdmitting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Check className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-7 w-7 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600 transition-colors"
+                      onClick={() => handleReject(participant.id)}
+                      disabled={isPending || isAdmittingAll}
+                    >
+                      {isRejecting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <X className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        ))}
+        )}
+
+        {/* Admitted Participants Section */}
+        {admittedParticipants.length > 0 && (
+          <div>
+            <h3 className="text-sm font-medium mb-2">Participants</h3>
+            {admittedParticipants.map((participant) => (
+              <div 
+                key={participant.id} 
+                className="flex items-center p-2 rounded-md bg-accent/40 mb-2"
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={participant.avatar} />
+                  <AvatarFallback>
+                    {participant.name ? participant.name.charAt(0).toUpperCase() : "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="ml-3">
+                  <span className="text-sm font-medium block">
+                    {participant.name || `Guest ${participant.id.substring(0, 4)}`}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       
-      {participants.length > 1 && onAdmitAll && (
+      {waitingParticipants.length > 1 && onAdmitAll && (
         <div className="mt-3 pt-2 border-t border-muted">
           <Button 
             variant="outline" 
             size="sm" 
             className="w-full"
-            onClick={onAdmitAll}
+            onClick={handleAdmitAll}
+            disabled={isAdmittingAll || Object.values(pendingActions).some(status => status !== null)}
           >
-            Admit All ({participants.length})
+            {isAdmittingAll ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Admitting all...
+              </>
+            ) : (
+              `Admit All (${waitingParticipants.length})`
+            )}
           </Button>
         </div>
       )}
