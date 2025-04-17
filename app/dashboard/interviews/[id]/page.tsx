@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, ArrowLeft, Mail } from "lucide-react"
+import { Calendar, ArrowLeft, Mail, Video, Link as LinkIcon } from "lucide-react"
 import { useTheme } from "next-themes"
 import {
   interviewAPI,
@@ -103,6 +103,17 @@ export default function InterviewDetailsPage() {
   })
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isMeetingDialogOpen, setIsMeetingDialogOpen] = useState(false)
+  const [meetingUrl, setMeetingUrl] = useState("")
+
+  // Function to truncate the URL for display
+  const truncateUrl = (url: string, maxLength = 50) => {
+    if (url.length <= maxLength) return url
+
+    const firstPart = url.substring(0, Math.floor(maxLength / 2) - 3)
+    const lastPart = url.substring(url.length - Math.floor(maxLength / 2))
+    return `${firstPart}...${lastPart}`
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -313,6 +324,28 @@ export default function InterviewDetailsPage() {
     }
   }
 
+  // Generate a meeting URL based on interview ID
+  const generateMeetingUrl = () => {
+    const uniqueId = `${interview?.id}-${Date.now()}`
+    return `${window.location.origin}/meeting/${uniqueId}`
+  }
+
+  const handleStartMeeting = () => {
+    const url = generateMeetingUrl()
+    setMeetingUrl(url)
+    setIsMeetingDialogOpen(true)
+  }
+
+  const joinAsHost = () => {
+    window.open(`${meetingUrl}?role=host`, "_blank")
+    setIsMeetingDialogOpen(false)
+  }
+
+  const copyMeetingLink = () => {
+    navigator.clipboard.writeText(meetingUrl)
+    toast.success("Meeting link copied to clipboard")
+  }
+
   if (loading) {
     return <div className="flex justify-center p-4">Loading interview details...</div>
   }
@@ -360,6 +393,35 @@ export default function InterviewDetailsPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={isMeetingDialogOpen} onOpenChange={setIsMeetingDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Start Video Meeting</DialogTitle>
+            <DialogDescription>
+              Share this link with participants or join as host to start the interview.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-center gap-2 rounded-md border p-3 bg-muted/30">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-mono" title={meetingUrl}>
+                  {truncateUrl(meetingUrl)}
+                </p>
+              </div>
+              <Button variant="secondary" size="sm" onClick={copyMeetingLink} className="shrink-0">
+                <LinkIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <DialogFooter className="flex space-x-2 justify-end">
+            <Button onClick={joinAsHost}>
+              <Video className="h-4 w-4 mr-2" />
+              Join as Host
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="mb-6">
         <Button variant="ghost" size="sm" className="mb-4" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Back
@@ -368,6 +430,9 @@ export default function InterviewDetailsPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Interview Details</h1>
           <div className="flex space-x-2">
+            <Button variant="default" onClick={handleStartMeeting}>
+              <Video className="h-4 w-4 mr-2" /> Start Meeting
+            </Button>
             <Button variant="outline" asChild>
               <Link href={`/dashboard/interviews/${interview.id}/edit`}>Edit</Link>
             </Button>
