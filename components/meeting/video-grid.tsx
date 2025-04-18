@@ -3,21 +3,25 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Participant } from '@/lib/meeting-context';
 import { useMeeting } from '@/lib/meeting-context';
-import { User, VideoOff, MicOff, AlertCircle } from 'lucide-react';
+import { User, VideoOff, MicOff } from 'lucide-react';
 
 interface VideoStreamProps {
   stream: MediaStream;
-  isMuted: boolean;
+  isMuted: boolean;           // Whether audio playback is muted
+  isLocalUser: boolean;       // New prop to identify if this is current user's stream
+  microphoneEnabled: boolean; // New prop for actual microphone state
   isVideoOff: boolean;
   displayName?: string;
-  recentlyChanged?: boolean; // New prop to highlight recent changes
-  changedState?: 'audio' | 'video' | null; // Which state recently changed
+  recentlyChanged?: boolean;
+  changedState?: 'audio' | 'video' | null;
 }
 
 // Individual video component
 function VideoStream({ 
   stream, 
   isMuted, 
+  isLocalUser,
+  microphoneEnabled,
   isVideoOff, 
   displayName,
   recentlyChanged,
@@ -26,6 +30,11 @@ function VideoStream({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoActive, setVideoActive] = useState(!isVideoOff);
   const [showChangeIndicator, setShowChangeIndicator] = useState(false);
+  
+  // Determine if we should show the mic muted icon
+  // For local user: show based on actual microphone state
+  // For remote users: show based on the isMuted prop
+  const showMicMutedIcon = isLocalUser ? !microphoneEnabled : isMuted;
   
   useEffect(() => {
     if (videoRef.current && stream) {
@@ -79,7 +88,7 @@ function VideoStream({
       {/* Status indicators */}
       <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
         <span className="bg-black/60 px-2 py-1 rounded text-xs text-white">
-          {displayName || 'Unknown'}
+          {displayName || 'Unknown'}{isLocalUser ? ' (You)' : ''}
         </span>
         
         <div className="flex items-center gap-1">
@@ -90,8 +99,8 @@ function VideoStream({
             </span>
           )}
           
-          {/* Muted indicator */}
-          {isMuted && (
+          {/* Muted indicator - show based on actual mic state, not playback muted state */}
+          {showMicMutedIcon && (
             <span className="bg-red-600/70 w-6 h-6 flex items-center justify-center rounded-full">
               <MicOff className="h-3 w-3" />
             </span>
@@ -216,8 +225,10 @@ export function VideoGrid({ participants, localStream, localAudioEnabled, localV
         <VideoStream 
           stream={localStream} 
           isMuted={true} // Always mute local stream to prevent echo
+          isLocalUser={true} // Identify this as the local user's stream
+          microphoneEnabled={localAudioEnabled} // Pass actual microphone state
           isVideoOff={!localVideoEnabled}
-          displayName={`${userName} (You)`} 
+          displayName={userName}
         />
       )}
       
@@ -231,6 +242,8 @@ export function VideoGrid({ participants, localStream, localAudioEnabled, localV
             key={participant.id}
             stream={participant.stream} 
             isMuted={!participant.audioEnabled} 
+            isLocalUser={false} // This is a remote participant
+            microphoneEnabled={participant.audioEnabled} 
             isVideoOff={!participant.videoEnabled}
             displayName={participant.name} 
             recentlyChanged={isRecentlyChanged}
