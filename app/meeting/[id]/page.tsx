@@ -10,10 +10,9 @@ import { ParticipantsNotification } from '@/components/meeting/participants-noti
 import { MeetingProvider, useMeeting } from '@/lib/meeting-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'react-toastify';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 // Store user ID in sessionStorage to prevent regeneration on refresh/HMR
 const getOrCreateUserId = () => {
@@ -114,7 +113,7 @@ function MeetingContent() {
 
         {/* Waiting Room Notification Panel (only for host) */}
         {isHost && (
-          <WaitingParticipants 
+          <WaitingParticipants
             participants={waitingParticipants}
             onAdmit={admitParticipant}
             onReject={rejectParticipant}

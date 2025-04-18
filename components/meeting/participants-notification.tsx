@@ -34,7 +34,7 @@ export function ParticipantsNotification({
   if (isCollapsed) {
     return (
       <div 
-        className="fixed bottom-4 left-4 z-10 cursor-pointer"
+        className="fixed bottom-24 right-4 z-10 cursor-pointer" // Position at bottom-right, with offset to avoid overlapping with waiting room
         onClick={() => setIsCollapsed(false)}
       >
         <div className="flex items-center justify-center bg-primary text-primary-foreground p-3 rounded-full shadow-lg">
@@ -46,7 +46,7 @@ export function ParticipantsNotification({
   }
 
   return (
-    <div className="fixed bottom-4 left-4 z-10 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-4 max-w-sm w-full animate-in slide-in-from-left">
+    <div className="fixed bottom-24 right-4 z-10 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-4 max-w-sm w-full animate-in slide-in-from-right"> {/* Position at bottom-right with offset */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-medium">Participants ({totalParticipants})</h3>
         <Button 

@@ -3,7 +3,7 @@
 import { ThemeProvider } from '@/components/theme-provider';
 import { MeetingHeader } from '@/components/meeting/header';
 
-export default function MeetingLayout({
+export default function CallEndedLayout({
   children,
 }: {
   children: React.ReactNode;

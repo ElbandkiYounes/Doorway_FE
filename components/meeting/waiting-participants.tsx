@@ -100,7 +100,7 @@ export function WaitingParticipants({
   if (isCollapsed) {
     return (
       <div 
-        className="fixed top-4 right-4 z-10 cursor-pointer"
+        className="fixed top-20 right-4 z-10 cursor-pointer" // Changed from top-4 to bottom-24
         onClick={() => setIsCollapsed(false)}
       >
         <div className="flex items-center justify-center bg-primary text-primary-foreground p-3 rounded-full shadow-lg animate-pulse">
@@ -117,7 +117,7 @@ export function WaitingParticipants({
   }
   
   return (
-    <div className="fixed top-4 right-4 z-10 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-4 max-w-sm w-full animate-in slide-in-from-right">
+    <div className="fixed top-20 right-4 z-10 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-4 max-w-sm w-full animate-in slide-in-from-right"> {/* Changed from top-4 to bottom-24 */}
       <div className="flex items-center justify-between mb-3">
         <div className="font-medium flex items-center">
           <span className="relative">

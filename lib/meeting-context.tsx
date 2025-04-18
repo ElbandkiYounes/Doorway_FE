@@ -259,8 +259,8 @@ export const MeetingProvider = ({
       webrtcServiceRef.current.disconnect();
     }
 
-    // Redirect to interview details
-    window.close(); // Or use router to navigate back
+    // Redirect to the call ended page with host information as a query parameter
+    window.location.href = `/meeting/call-ended?isHost=${isHost}`;
   };
 
   return (

@@ -51,6 +51,11 @@ export function ControlBar({ isHost }: ControlBarProps) {
     });
   };
 
+  const handleLeaveCall = () => {
+    // Use the leaveCall function from context which has been updated to redirect
+    leaveCall();
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm p-4 border-t">
       <div className="container max-w-4xl mx-auto flex items-center justify-between">
@@ -109,7 +114,7 @@ export function ControlBar({ isHost }: ControlBarProps) {
           <Button 
             variant="destructive" 
             size="sm"
-            onClick={leaveCall}
+            onClick={handleLeaveCall}
             className="flex items-center gap-1"
             title="Leave the meeting"
           >
