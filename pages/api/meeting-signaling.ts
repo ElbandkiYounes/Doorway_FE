@@ -212,12 +212,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             room.participants.set(targetUserId, participant);
             room.waitingParticipants.delete(targetUserId);
             
-            // Notify participant
+            // Notify participant that they're admitted
             io.to(participant.socketId).emit('admitted');
             
-            // Notify the new participant about existing participants
+            // IMPORTANT: Notify the new participant about ALL existing participants
+            // Including the host and other participants
             room.participants.forEach((p, id) => {
+              // Don't notify about themselves
               if (id !== targetUserId) {
+                console.log(`Notifying new participant ${targetUserId} about existing participant ${id}`);
                 io.to(participant.socketId).emit('user-joined', {
                   userId: id,
                   userName: p.userName
@@ -225,9 +228,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
               }
             });
             
-            // Notify all existing participants about the new participant
+            // IMPORTANT: Notify ALL existing participants about the new participant
             room.participants.forEach((p, id) => {
+              // Don't notify themselves
               if (id !== targetUserId) {
+                console.log(`Notifying existing participant ${id} about new participant ${targetUserId}`);
                 io.to(p.socketId).emit('user-joined', {
                   userId: targetUserId,
                   userName: participant.userName
@@ -248,6 +253,26 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             io.to(participant.socketId).emit('rejected');
             room.waitingParticipants.delete(targetUserId);
           }
+        });
+        
+        // Handle media state changes
+        socket.on('media-state', (data) => {
+          const { roomId, userId, audioEnabled, videoEnabled } = data;
+          console.log(`User ${userId} in room ${roomId} changed media state: audio=${audioEnabled}, video=${videoEnabled}`);
+          
+          const room = rooms.get(roomId);
+          if (!room) return;
+          
+          // Forward to all other participants in the room
+          room.participants.forEach((participant, id) => {
+            if (id !== userId) {
+              io.to(participant.socketId).emit('media-state-changed', {
+                userId,
+                audioEnabled,
+                videoEnabled
+              });
+            }
+          });
         });
         
         // Helper function to forward messages

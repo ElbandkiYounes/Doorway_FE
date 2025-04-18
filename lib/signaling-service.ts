@@ -20,6 +20,7 @@ export class SignalingService {
   public onOffer: (userId: string, offer: RTCSessionDescriptionInit) => void = () => {};
   public onAnswer: (userId: string, answer: RTCSessionDescriptionInit) => void = () => {};
   public onIceCandidate: (userId: string, candidate: RTCIceCandidateInit) => void = () => {};
+  public onMediaStateChanged: (userId: string, audioEnabled: boolean, videoEnabled: boolean) => void = () => {};
 
   // Waiting room callbacks
   public onParticipantWaiting: (userId: string, name?: string, avatar?: string) => void = () => {};
@@ -128,6 +129,11 @@ export class SignalingService {
       this.onIceCandidate(data.userId, data.candidate);
     });
 
+    this.socket.on('media-state-changed', (data) => {
+      console.log(`Received media state update from: ${data.userId}`, data);
+      this.onMediaStateChanged(data.userId, data.audioEnabled, data.videoEnabled);
+    });
+
     // Waiting room events
     this.socket.on('waiting', (data) => {
       // Generate a notification ID if not provided
@@ -199,6 +205,18 @@ export class SignalingService {
         targetUserId,
         userId: this.userId,
         candidate
+      });
+    }
+  }
+
+  public broadcastMediaState(state: { audio: boolean, video: boolean }) {
+    if (this.socket) {
+      console.log(`Broadcasting media state: audio=${state.audio}, video=${state.video}`);
+      this.socket.emit('media-state', {
+        roomId: this.roomId,
+        userId: this.userId,
+        audioEnabled: state.audio,
+        videoEnabled: state.video
       });
     }
   }

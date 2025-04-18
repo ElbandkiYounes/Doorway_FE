@@ -44,11 +44,15 @@ function MeetingContent() {
     admitParticipant,
     rejectParticipant,
     admitAllParticipants,
-    leaveCall
+    leaveCall,
+    userName
   } = useMeeting();
   
   const router = useRouter();
-  const hostName = isHost ? "You" : participants.find(p => p.id === "host")?.name || "Host"; // Determine host name
+  
+  // Find the host participant if we're not the host
+  const hostParticipant = !isHost ? participants.find(p => p.id === "host") : null;
+  const hostName = hostParticipant?.name || "Host";
 
   // If the participant was rejected
   if (isRejected) {
@@ -119,8 +123,13 @@ function MeetingContent() {
         )}
       </main>
       
-      {/* Participants Notification UI */}
-      <ParticipantsNotification participants={participants} hostName={hostName} isHost={isHost} />
+      {/* Participants Notification UI - pass correct data */}
+      <ParticipantsNotification 
+        participants={participants} 
+        hostName={hostName} 
+        isHost={isHost}
+        userName={userName} // Use the actual userName from context
+      />
 
       {/* Controls */}
       <ControlBar isHost={isHost} />

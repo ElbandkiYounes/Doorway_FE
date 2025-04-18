@@ -27,6 +27,7 @@ type MeetingContextType = {
   isVideoEnabled: boolean;
   isScreenSharing: boolean;
   error: string | null;
+  userName: string; // Add userName to the context
   toggleAudio: () => void;
   toggleVideo: () => void;
   toggleScreenShare: () => void;
@@ -91,13 +92,23 @@ export const MeetingProvider = ({
             (id, name, stream) => {
               setParticipants(prev => [
                 ...prev.filter(p => p.id !== id),
-                { id, name: name || `Guest ${id.substring(0, 4)}`, stream, audioEnabled: true, videoEnabled: true } // Use the provided name or fallback
+                { id, name: name || `Guest ${id.substring(0, 4)}`, stream, audioEnabled: true, videoEnabled: true }
               ]);
             },
             (id) => {
               setParticipants(prev => prev.filter(p => p.id !== id));
             }
           );
+
+          // Listen for media state changes
+          service.signalingService.onMediaStateChanged = (userId, audioEnabled, videoEnabled) => {
+            setParticipants(prev => prev.map(p => {
+              if (p.id === userId) {
+                return { ...p, audioEnabled, videoEnabled };
+              }
+              return p;
+            }));
+          };
 
           // Set callbacks for waiting room
           service.setWaitingRoomCallbacks(
@@ -168,6 +179,16 @@ export const MeetingProvider = ({
       const newState = !isAudioEnabled;
       webrtcServiceRef.current.toggleAudio(newState);
       setIsAudioEnabled(newState);
+      
+      // Immediately update our own state in the participants list if we're the host
+      if (isHost) {
+        setParticipants(prev => prev.map(p => {
+          if (p.id === "host") {
+            return { ...p, audioEnabled: newState };
+          }
+          return p;
+        }));
+      }
     }
   };
 
@@ -177,6 +198,16 @@ export const MeetingProvider = ({
       const newState = !isVideoEnabled;
       webrtcServiceRef.current.toggleVideo(newState);
       setIsVideoEnabled(newState);
+      
+      // Immediately update our own state in the participants list if we're the host
+      if (isHost) {
+        setParticipants(prev => prev.map(p => {
+          if (p.id === "host") {
+            return { ...p, videoEnabled: newState };
+          }
+          return p;
+        }));
+      }
     }
   };
 
@@ -245,6 +276,7 @@ export const MeetingProvider = ({
       isVideoEnabled,
       isScreenSharing,
       error,
+      userName, // Expose userName to the context
       toggleAudio,
       toggleVideo,
       toggleScreenShare,
