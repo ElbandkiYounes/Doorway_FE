@@ -134,6 +134,27 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
           }
         });
         
+        // Handle leave event
+        socket.on('leave', (data) => {
+          const { roomId, userId } = data;
+          console.log(`Processing leave event for user ${userId} in room ${roomId}`);
+          const room = rooms.get(roomId);
+
+          if (room) {
+            // Remove from waiting participants
+            if (room.waitingParticipants.has(userId)) {
+              room.waitingParticipants.delete(userId);
+            }
+
+            // Notify the host about the participant leaving
+            if (room.host) {
+              io.to(room.host.socketId).emit('user-left', { userId });
+            }
+
+            console.log(`User ${userId} left room ${roomId}`);
+          }
+        });
+
         // Clean up notifications when a socket disconnects
         socket.on('disconnect', () => {
           console.log('Client disconnected:', socket.id);
@@ -194,7 +215,17 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             // Notify participant
             io.to(participant.socketId).emit('admitted');
             
-            // Notify others
+            // Notify the new participant about existing participants
+            room.participants.forEach((p, id) => {
+              if (id !== targetUserId) {
+                io.to(participant.socketId).emit('user-joined', {
+                  userId: id,
+                  userName: p.userName
+                });
+              }
+            });
+            
+            // Notify all existing participants about the new participant
             room.participants.forEach((p, id) => {
               if (id !== targetUserId) {
                 io.to(p.socketId).emit('user-joined', {

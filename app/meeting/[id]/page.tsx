@@ -6,10 +6,14 @@ import { VideoGrid } from '@/components/meeting/video-grid';
 import { ControlBar } from '@/components/meeting/controls';
 import { WaitingRoom } from '@/components/meeting/waiting-room';
 import { WaitingParticipants } from '@/components/meeting/waiting-participants';
+import { ParticipantsNotification } from '@/components/meeting/participants-notification';
 import { MeetingProvider, useMeeting } from '@/lib/meeting-context';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
+import { toast } from 'react-toastify';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 // Store user ID in sessionStorage to prevent regeneration on refresh/HMR
 const getOrCreateUserId = () => {
@@ -44,6 +48,7 @@ function MeetingContent() {
   } = useMeeting();
   
   const router = useRouter();
+  const hostName = isHost ? "You" : participants.find(p => p.id === "host")?.name || "Host"; // Determine host name
 
   // If the participant was rejected
   if (isRejected) {
@@ -102,7 +107,7 @@ function MeetingContent() {
           localAudioEnabled={isAudioEnabled}
           localVideoEnabled={isVideoEnabled}
         />
-        
+
         {/* Waiting Room Notification Panel (only for host) */}
         {isHost && (
           <WaitingParticipants 
@@ -114,6 +119,9 @@ function MeetingContent() {
         )}
       </main>
       
+      {/* Participants Notification UI */}
+      <ParticipantsNotification participants={participants} hostName={hostName} isHost={isHost} />
+
       {/* Controls */}
       <ControlBar isHost={isHost} />
     </div>
@@ -125,9 +133,10 @@ export default function MeetingPage() {
   const searchParams = useSearchParams();
   const [meetingId, setMeetingId] = useState<string>('');
   const [isHost, setIsHost] = useState(false);
-  const [userName, setUserName] = useState('Guest');
+  const [userName, setUserName] = useState('');
+  const [isJoining, setIsJoining] = useState(false); // Track if the user is joining
   const userIdRef = useRef<string>(getOrCreateUserId());
-  
+
   useEffect(() => {
     const id = params.id as string;
     setMeetingId(id);
@@ -135,12 +144,6 @@ export default function MeetingPage() {
     // Check if user is host
     const role = searchParams.get('role');
     setIsHost(role === 'host');
-    
-    // Get user name if provided
-    const name = searchParams.get('name');
-    if (name) {
-      setUserName(name);
-    }
 
     console.log(`MeetingPage mounted with userId: ${userIdRef.current}, isHost: ${role === 'host'}`);
 
@@ -149,7 +152,49 @@ export default function MeetingPage() {
       console.log('MeetingPage unmounting, cleaning up connections');
     };
   }, [params.id, searchParams]);
-  
+
+  const handleJoin = () => {
+    if (!userName.trim()) {
+      toast.error("Please enter your name before joining.");
+      return;
+    }
+    setIsJoining(true);
+  };
+
+  if (!isJoining) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-muted/30">
+        <div className="w-full max-w-md">
+          <Card>
+            <CardHeader className="text-center">
+              <CardTitle className="text-xl font-bold">Join Meeting</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <label htmlFor="name" className="block text-sm font-medium text-muted-foreground">
+                  Enter your name
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  placeholder="Your name"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button onClick={handleJoin} className="w-full">
+                Join Meeting
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   if (!meetingId) {
     return <div className="flex justify-center p-4">Loading...</div>;
   }
@@ -159,7 +204,7 @@ export default function MeetingPage() {
     <MeetingProvider 
       meetingId={meetingId} 
       isHost={isHost}
-      userName={userName}
+      userName={userName} // Pass the entered userName
       userId={userIdRef.current}  // Pass the persistent userId
     >
       <MeetingContent />

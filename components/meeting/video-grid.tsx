@@ -83,7 +83,7 @@ export function VideoGrid({ participants, localStream, localAudioEnabled, localV
           stream={participant.stream} 
           isMuted={!participant.audioEnabled}
           isVideoOff={!participant.videoEnabled}
-          displayName={`Participant ${participant.id.substring(0, 4)}`}
+          displayName={participant.name || `Guest ${participant.id.substring(0, 4)}`} // Display the participant's name
         />
       ))}
     </div>

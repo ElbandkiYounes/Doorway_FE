@@ -19,6 +19,12 @@ export function WaitingRoom({
   meetingTitle = "Interview Meeting",
   onLeave 
 }: WaitingRoomProps) {
+  const handleLeave = () => {
+    onLeave(); // Notify the server about leaving
+    console.log("Participant is leaving the meeting...");
+    window.open("http://localhost:3000/", "_self"); // Redirect to the homepage without clearing the console
+  };
+
   return (
     <div className="h-screen flex items-center justify-center bg-muted/30">
       <Card className="w-full max-w-md mx-auto">
@@ -51,7 +57,7 @@ export function WaitingRoom({
           <Button 
             variant="outline" 
             className="w-full" 
-            onClick={onLeave}
+            onClick={handleLeave}
           >
             Leave
           </Button>

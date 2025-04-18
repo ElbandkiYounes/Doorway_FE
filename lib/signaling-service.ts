@@ -239,4 +239,14 @@ export class SignalingService {
       globalSocketInstance = null;
     }
   }
+
+  public leaveMeeting() {
+    if (this.socket) {
+      this.socket.emit('leave', {
+        roomId: this.roomId,
+        userId: this.userId,
+      });
+      this.disconnect();
+    }
+  }
 }

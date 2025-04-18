@@ -15,7 +15,7 @@ export class WebRTCService {
     this.signalingService = new SignalingService(roomId, userId, isHost, userName);
     
     // Set up signaling event handlers
-    this.signalingService.onUserJoined = (userId, userName) => this.handleUserJoined(userId, userName);
+    this.signalingService.onUserJoined = (userId, userName) => this.handleUserJoined(userId, userName); // Ensure userName is passed
     this.signalingService.onUserLeft = (userId) => this.handleUserLeft(userId);
     this.signalingService.onOffer = (userId, offer) => this.handleOffer(userId, offer);
     this.signalingService.onAnswer = (userId, answer) => this.handleAnswer(userId, answer);
@@ -65,7 +65,7 @@ export class WebRTCService {
     this.onRejectedCallback = onRejected;
   }
 
-  private async createPeerConnection(userId: string): Promise<RTCPeerConnection> {
+  private async createPeerConnection(userId: string, userName?: string): Promise<RTCPeerConnection> {
     // STUN servers for NAT traversal
     const configuration = {
       iceServers: [
@@ -92,7 +92,7 @@ export class WebRTCService {
 
     // Handle incoming tracks
     peerConnection.ontrack = (event) => {
-      this.onParticipantAddedCallback(userId, undefined, event.streams[0]);
+      this.onParticipantAddedCallback(userId, userName, event.streams[0]); // Pass the userName
     };
 
     this.peerConnections.set(userId, peerConnection);
@@ -100,13 +100,22 @@ export class WebRTCService {
   }
 
   private async handleUserJoined(userId: string, userName: string) {
-    if (this.signalingService.isHost) {
-      const peerConnection = await this.createPeerConnection(userId);
-      
+    console.log(`User joined: ${userName} (${userId}). Creating peer connection as ${this.signalingService.isHost ? 'host' : 'participant'}`);
+    
+    // Everyone should create connections with new users, not just the host
+    const peerConnection = await this.createPeerConnection(userId, userName);
+    
+    // If we're the host OR we joined after them (we're the newer participant)
+    // This ensures connections are created in one direction only to avoid duplicates
+    if (this.signalingService.isHost || this.signalingService.userId > userId) {
+      console.log(`Initiating connection to ${userName} (${userId})`);
       // Create and send offer
       const offer = await peerConnection.createOffer();
       await peerConnection.setLocalDescription(offer);
       this.signalingService.sendOffer(userId, offer);
+    } else {
+      console.log(`Waiting for offer from ${userName} (${userId})`);
+      // For participants that joined earlier, wait for their offer
     }
   }
 

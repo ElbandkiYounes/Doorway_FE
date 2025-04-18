@@ -91,7 +91,7 @@ export const MeetingProvider = ({
             (id, name, stream) => {
               setParticipants(prev => [
                 ...prev.filter(p => p.id !== id),
-                { id, name: name || `User-${id.substr(0, 4)}`, stream, audioEnabled: true, videoEnabled: true }
+                { id, name: name || `Guest ${id.substring(0, 4)}`, stream, audioEnabled: true, videoEnabled: true } // Use the provided name or fallback
               ]);
             },
             (id) => {
