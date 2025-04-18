@@ -38,11 +38,30 @@ export class WebRTCService {
         video: true
       });
       
+      // Immediately broadcast initial media state to other participants
+      this.broadcastInitialMediaState();
+      
       return this.localStream;
     } catch (error) {
       console.error('Error getting user media:', error);
       throw error;
     }
+  }
+
+  private broadcastInitialMediaState() {
+    // Short delay to ensure signaling connection is established
+    setTimeout(() => {
+      if (this.localStream) {
+        const audioEnabled = this.localStream.getAudioTracks().some(track => track.enabled);
+        const videoEnabled = this.localStream.getVideoTracks().some(track => track.enabled);
+        
+        console.log(`Broadcasting initial media state: audio=${audioEnabled}, video=${videoEnabled}`);
+        this.signalingService.broadcastMediaState({
+          audio: audioEnabled,
+          video: videoEnabled
+        });
+      }
+    }, 1000);
   }
 
   public setCallbacks(
@@ -144,6 +163,18 @@ export class WebRTCService {
       } else {
         console.log(`Waiting for offer from ${userName} (${userId})`);
         // The other peer will initiate
+      }
+
+      // After connection is established, send current media state
+      if (this.localStream) {
+        const audioEnabled = this.localStream.getAudioTracks().some(track => track.enabled);
+        const videoEnabled = this.localStream.getVideoTracks().some(track => track.enabled);
+        
+        // Let the new participant know your current media state
+        this.signalingService.sendMediaState(userId, {
+          audio: audioEnabled,
+          video: videoEnabled
+        });
       }
     } catch (error) {
       console.error(`Error handling user joined for ${userId}:`, error);

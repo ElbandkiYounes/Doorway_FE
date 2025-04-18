@@ -221,6 +221,19 @@ export class SignalingService {
     }
   }
 
+  public sendMediaState(targetUserId: string, state: { audio: boolean, video: boolean }) {
+    if (this.socket) {
+      console.log(`Sending media state to ${targetUserId}: audio=${state.audio}, video=${state.video}`);
+      this.socket.emit('direct-media-state', {
+        roomId: this.roomId,
+        userId: this.userId,
+        targetUserId: targetUserId,
+        audioEnabled: state.audio,
+        videoEnabled: state.video
+      });
+    }
+  }
+
   // Waiting room management
   public admitParticipant(participantId: string) {
     console.log(`[HOST] Admitting participant: ${participantId}`);

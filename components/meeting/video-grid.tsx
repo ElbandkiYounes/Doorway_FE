@@ -3,19 +3,29 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Participant } from '@/lib/meeting-context';
 import { useMeeting } from '@/lib/meeting-context';
-import { User, VideoOff, MicOff } from 'lucide-react';
+import { User, VideoOff, MicOff, AlertCircle } from 'lucide-react';
 
 interface VideoStreamProps {
   stream: MediaStream;
   isMuted: boolean;
   isVideoOff: boolean;
   displayName?: string;
+  recentlyChanged?: boolean; // New prop to highlight recent changes
+  changedState?: 'audio' | 'video' | null; // Which state recently changed
 }
 
 // Individual video component
-function VideoStream({ stream, isMuted, isVideoOff, displayName }: VideoStreamProps) {
+function VideoStream({ 
+  stream, 
+  isMuted, 
+  isVideoOff, 
+  displayName,
+  recentlyChanged,
+  changedState 
+}: VideoStreamProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoActive, setVideoActive] = useState(!isVideoOff);
+  const [showChangeIndicator, setShowChangeIndicator] = useState(false);
   
   useEffect(() => {
     if (videoRef.current && stream) {
@@ -27,6 +37,15 @@ function VideoStream({ stream, isMuted, isVideoOff, displayName }: VideoStreamPr
   useEffect(() => {
     setVideoActive(!isVideoOff && stream?.getVideoTracks().some(track => track.enabled) === true);
   }, [isVideoOff, stream]);
+  
+  // Show change indicator when media state changes
+  useEffect(() => {
+    if (recentlyChanged) {
+      setShowChangeIndicator(true);
+      const timer = setTimeout(() => setShowChangeIndicator(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [recentlyChanged]);
   
   return (
     <div className="relative overflow-hidden rounded-lg bg-muted h-full">
@@ -63,13 +82,21 @@ function VideoStream({ stream, isMuted, isVideoOff, displayName }: VideoStreamPr
           {displayName || 'Unknown'}
         </span>
         
-        {/* Muted indicator */}
-        {isMuted && (
-          <span className="bg-red-600/70 px-2 py-1 rounded text-xs text-white flex items-center">
-            <MicOff className="h-3 w-3 mr-1" />
-            <span>Muted</span>
-          </span>
-        )}
+        <div className="flex items-center gap-1">
+          {/* Video status indicator */}
+          {isVideoOff && (
+            <span className="bg-red-600/70 w-6 h-6 flex items-center justify-center rounded-full">
+              <VideoOff className="h-3 w-3" />
+            </span>
+          )}
+          
+          {/* Muted indicator */}
+          {isMuted && (
+            <span className="bg-red-600/70 w-6 h-6 flex items-center justify-center rounded-full">
+              <MicOff className="h-3 w-3" />
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -85,6 +112,91 @@ interface VideoGridProps {
 export function VideoGrid({ participants, localStream, localAudioEnabled, localVideoEnabled }: VideoGridProps) {
   // Get userName from the meeting context
   const { userName } = useMeeting();
+  const [recentChanges, setRecentChanges] = useState<Record<string, {type: 'audio' | 'video', timestamp: number}>>({});
+  
+  // Track media state changes to show indicators
+  useEffect(() => {
+    const newChanges = {...recentChanges};
+    
+    // Add each participant change to the tracking object
+    participants.forEach(p => {
+      const key = p.id;
+      const prevState = newChanges[key];
+      
+      if (!prevState) {
+        // Initial state - don't show notification
+        return;
+      }
+      
+      // If the state changed in the last 3 seconds, update the timestamp and type
+      const now = Date.now();
+      if (now - prevState.timestamp < 3000) {
+        newChanges[key] = { ...prevState, timestamp: now };
+      }
+    });
+    
+    setRecentChanges(newChanges);
+    
+    // Clean up old notifications
+    const cleanupInterval = setInterval(() => {
+      const now = Date.now();
+      const currentChanges = {...recentChanges};
+      let hasChanges = false;
+      
+      Object.entries(currentChanges).forEach(([key, value]) => {
+        if (now - value.timestamp > 3000) {
+          delete currentChanges[key];
+          hasChanges = true;
+        }
+      });
+      
+      if (hasChanges) {
+        setRecentChanges(currentChanges);
+      }
+    }, 1000);
+    
+    return () => clearInterval(cleanupInterval);
+  }, [participants]);
+  
+  // Initialize tracking for new participants
+  useEffect(() => {
+    const newChanges = {...recentChanges};
+    
+    participants.forEach(p => {
+      if (!newChanges[p.id]) {
+        newChanges[p.id] = { type: 'audio', timestamp: Date.now() - 3000 }; // Initialize with expired timestamp
+      }
+    });
+    
+    setRecentChanges(newChanges);
+  }, [participants.length]);
+  
+  // Record changes when audio/video state changes
+  useEffect(() => {
+    const newChanges = {...recentChanges};
+    
+    participants.forEach(p => {
+      const key = p.id;
+      const prevState = newChanges[key];
+      
+      if (!prevState) {
+        newChanges[key] = { type: 'audio', timestamp: Date.now() - 3000 }; // Initialize with expired timestamp
+        return;
+      }
+      
+      // If audio state changed, update timestamp
+      if (prevState.type === 'audio' && !p.audioEnabled) {
+        newChanges[key] = { type: 'audio', timestamp: Date.now() };
+      }
+      
+      // If video state changed, update timestamp
+      if (prevState.type === 'video' && !p.videoEnabled) {
+        newChanges[key] = { type: 'video', timestamp: Date.now() };
+      }
+    });
+    
+    setRecentChanges(newChanges);
+  }, [participants.map(p => p.audioEnabled + '|' + p.videoEnabled).join(',')]);
   
   // Determine grid layout class based on number of participants
   const getGridClass = () => {
@@ -105,20 +217,27 @@ export function VideoGrid({ participants, localStream, localAudioEnabled, localV
           stream={localStream} 
           isMuted={true} // Always mute local stream to prevent echo
           isVideoOff={!localVideoEnabled}
-          displayName={userName} // Use the actual user name instead of "You"
+          displayName={`${userName} (You)`} 
         />
       )}
       
-      {/* Remote streams - now showing mic/camera status from participant data */}
-      {participants.map((participant) => (
-        <VideoStream 
-          key={participant.id}
-          stream={participant.stream} 
-          isMuted={!participant.audioEnabled} // Use the current audioEnabled state from participant
-          isVideoOff={!participant.videoEnabled} // Use the current videoEnabled state from participant
-          displayName={participant.name} // Always use the participant's actual name
-        />
-      ))}
+      {/* Remote streams */}
+      {participants.map((participant) => {
+        const change = recentChanges[participant.id];
+        const isRecentlyChanged = change && (Date.now() - change.timestamp < 3000);
+        
+        return (
+          <VideoStream 
+            key={participant.id}
+            stream={participant.stream} 
+            isMuted={!participant.audioEnabled} 
+            isVideoOff={!participant.videoEnabled}
+            displayName={participant.name} 
+            recentlyChanged={isRecentlyChanged}
+            changedState={change?.type || null}
+          />
+        );
+      })}
     </div>
   );
 }

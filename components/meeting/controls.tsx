@@ -18,13 +18,37 @@ export function ControlBar({ isHost }: ControlBarProps) {
     toggleAudio,
     toggleVideo,
     toggleScreenShare,
-    leaveCall
+    leaveCall,
+    userName
   } = useMeeting();
 
   // Copy meeting link
   const copyMeetingLink = () => {
     navigator.clipboard.writeText(window.location.href.replace('?role=host', ''));
     toast.success("Meeting link copied to clipboard");
+  };
+
+  // Enhanced toggle handlers with toast notifications
+  const handleToggleAudio = () => {
+    const newState = !isAudioEnabled;
+    toggleAudio();
+    
+    // Toast will be visible only to the current user
+    toast.info(`You ${newState ? 'unmuted' : 'muted'} your microphone`, { 
+      autoClose: 2000,
+      position: "bottom-center"
+    });
+  };
+
+  const handleToggleVideo = () => {
+    const newState = !isVideoEnabled;
+    toggleVideo();
+    
+    // Toast will be visible only to the current user
+    toast.info(`You turned ${newState ? 'on' : 'off'} your camera`, { 
+      autoClose: 2000,
+      position: "bottom-center"
+    });
   };
 
   return (
@@ -34,25 +58,34 @@ export function ControlBar({ isHost }: ControlBarProps) {
           <Button 
             variant={isAudioEnabled ? "outline" : "destructive"} 
             size="icon"
-            onClick={toggleAudio}
+            onClick={handleToggleAudio}
+            className="relative"
             title={isAudioEnabled ? "Mute" : "Unmute"}
           >
             {isAudioEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+            {!isAudioEnabled && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-background"></span>
+            )}
           </Button>
           
           <Button 
             variant={isVideoEnabled ? "outline" : "destructive"} 
             size="icon"
-            onClick={toggleVideo}
+            onClick={handleToggleVideo}
+            className="relative"
             title={isVideoEnabled ? "Turn off camera" : "Turn on camera"}
           >
             {isVideoEnabled ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+            {!isVideoEnabled && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-background"></span>
+            )}
           </Button>
           
           <Button 
             variant={isScreenSharing ? "secondary" : "outline"} 
             size="icon"
             onClick={toggleScreenShare}
+            className={isScreenSharing ? "bg-amber-500/20 border-amber-500 text-amber-700" : ""}
             title={isScreenSharing ? "Stop sharing" : "Share screen"}
           >
             <Monitor className="h-5 w-5" />
@@ -65,8 +98,8 @@ export function ControlBar({ isHost }: ControlBarProps) {
               variant="outline" 
               size="sm"
               onClick={copyMeetingLink}
-              title="Copy meeting link"
               className="flex items-center gap-1"
+              title="Copy meeting link to clipboard"
             >
               <UserPlus className="h-4 w-4" />
               <span>Copy Invite Link</span>
@@ -78,6 +111,7 @@ export function ControlBar({ isHost }: ControlBarProps) {
             size="sm"
             onClick={leaveCall}
             className="flex items-center gap-1"
+            title="Leave the meeting"
           >
             <PhoneOff className="h-4 w-4" />
             <span>End Call</span>

@@ -274,6 +274,24 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             }
           });
         });
+
+        socket.on('direct-media-state', (data) => {
+          const { roomId, targetUserId, userId, audioEnabled, videoEnabled } = data;
+          console.log(`Direct media state from ${userId} to ${targetUserId}: audio=${audioEnabled}, video=${videoEnabled}`);
+          
+          const room = rooms.get(roomId);
+          if (!room) return;
+          
+          // Forward to the specific target user
+          const target = room.participants.get(targetUserId);
+          if (target) {
+            io.to(target.socketId).emit('media-state-changed', {
+              userId,
+              audioEnabled,
+              videoEnabled
+            });
+          }
+        });
         
         // Helper function to forward messages
         function forwardMessage(socket, messageType, data) {
