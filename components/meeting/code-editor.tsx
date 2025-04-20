@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMeeting } from '@/lib/meeting-context';
 import Editor from '@monaco-editor/react';
+import { useTheme } from 'next-themes';
 
 interface CodeEditorProps {
   roomId: string;
@@ -14,6 +15,7 @@ export function CodeEditor({ roomId, userId }: CodeEditorProps) {
   const [language, setLanguage] = useState<string>('javascript');
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const { sendCodeUpdate, remoteCode } = useMeeting();
+  const { theme } = useTheme(); // Access the page theme
 
   // Apply remote code changes when they come in
   useEffect(() => {
@@ -75,7 +77,7 @@ export function CodeEditor({ roomId, userId }: CodeEditorProps) {
             fontSize: 14,
             automaticLayout: true,
           }}
-          theme="vs-dark"
+          theme={theme === 'dark' ? 'vs-dark' : 'vs-light'} // Sync with page theme
         />
       </div>
     </div>
