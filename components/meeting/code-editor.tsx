@@ -16,7 +16,7 @@ export function CodeEditor({ roomId, userId }: CodeEditorProps) {
   const [code, setCode] = useState<string>('// Start coding here...');
   const [language, setLanguage] = useState<string>('javascript');
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const { sendCodeUpdate, remoteCode } = useMeeting();
+  const { sendCodeUpdate, remoteCode, endCall } = useMeeting();
   const { theme } = useTheme(); // Access the page theme
 
   // Apply remote code changes when they come in
@@ -48,6 +48,22 @@ export function CodeEditor({ roomId, userId }: CodeEditorProps) {
     setLanguage(newLanguage);
     sendCodeUpdate(code, newLanguage);
   };
+
+  // Add event listener to handle tab close
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Call the appropriate method to handle call ending in the meeting context
+      if (typeof window !== 'undefined' && endCall) {
+        endCall();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [endCall]);
 
   return (
     <div className="h-full flex flex-col">
