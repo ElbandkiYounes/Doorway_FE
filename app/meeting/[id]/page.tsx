@@ -125,8 +125,7 @@ function MeetingContent({ userId }: { userId: string }) {
         {/* Right side - Code Editor (conditionally rendered) */}
         {isCodeEditorVisible ? (
           <div className="w-full lg:w-1/2 h-full border-t lg:border-t-0 lg:border-l transition-all duration-300 ease-in-out flex flex-col">
-            <div className="bg-muted/20 p-2 border-b flex justify-between items-center">
-              <h3 className="text-sm font-medium">Collaborative Code Editor</h3>
+            <div className=" p-2 border-b flex justify-between items-center fixed right-3">
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -134,7 +133,7 @@ function MeetingContent({ userId }: { userId: string }) {
                 className="h-7 w-7 p-0"
               >
                 <span className="sr-only">Hide Editor</span>
-                <X className="h-4 w-4" />
+                <X className=" h-4 w-4 " />
               </Button>
             </div>
             {/* Make sure to specify that this div takes all available height */}
@@ -146,14 +145,13 @@ function MeetingContent({ userId }: { userId: string }) {
             </div>
           </div>
         ) : (
-          <div className="fixed bottom-24 right-4 z-10">
+          <div className="fixed top-16 right-4 z-10">
             <Button 
               onClick={() => setIsCodeEditorVisible(true)}
-              className="shadow-lg"
+              className="shadow-lg rounded-full p-2.5 bg-primary/90 hover:bg-primary text-primary-foreground"
               size="sm"
             >
-              <Code className="h-4 w-4 mr-2" />
-              Code Editor
+              <Code className="h-4 w-4" />
             </Button>
           </div>
         )}

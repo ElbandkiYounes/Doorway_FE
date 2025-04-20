@@ -34,7 +34,7 @@ export function ParticipantsNotification({
   if (isCollapsed) {
     return (
       <div 
-        className="fixed bottom-24 right-4 z-10 cursor-pointer" // Position at bottom-right, with offset to avoid overlapping with waiting room
+        className="fixed bottom-4 right-4 z-20 cursor-pointer" // Position at bottom-right, with offset to avoid overlapping with waiting room
         onClick={() => setIsCollapsed(false)}
       >
         <div className="flex items-center justify-center bg-primary text-primary-foreground p-3 rounded-full shadow-lg">
@@ -46,7 +46,7 @@ export function ParticipantsNotification({
   }
 
   return (
-    <div className="fixed bottom-24 right-4 z-10 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-4 max-w-sm w-full animate-in slide-in-from-right"> {/* Position at bottom-right with offset */}
+    <div className="fixed bottom-24 right-4 z-20 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-4 max-w-sm w-full animate-in slide-in-from-right"> {/* Position at bottom-right with offset */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-medium">Participants ({totalParticipants})</h3>
         <Button 
@@ -81,7 +81,7 @@ export function ParticipantsNotification({
             className="flex items-center p-2 rounded-md bg-accent/40 hover:bg-accent/60 transition-colors"
           >
             <Avatar className="h-8 w-8">
-              <AvatarImage src={participant.avatar || "/user-placeholder.svg"} />
+              <AvatarImage src={"/user-placeholder.svg"} />
               <AvatarFallback>
                 {participant.name ? participant.name.charAt(0).toUpperCase() : <Users className="h-4 w-4" />}
               </AvatarFallback>

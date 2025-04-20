@@ -57,7 +57,7 @@ export function ControlBar({ isHost }: ControlBarProps) {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm p-3 md:p-4 border-t shadow-lg">
+    <div className="fixed bottom-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-sm p-3 md:p-4 border-t shadow-lg">
       <div className="container max-w-6xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-1 md:gap-2">
           <Button 

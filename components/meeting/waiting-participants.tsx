@@ -100,14 +100,14 @@ export function WaitingParticipants({
   if (isCollapsed) {
     return (
       <div 
-        className="fixed top-20 right-4 z-10 cursor-pointer" // Changed from top-4 to bottom-24
+        className="fixed top-3 right-12 z-20 cursor-pointer" // Changed from top-4 to bottom-24
         onClick={() => setIsCollapsed(false)}
       >
-        <div className="flex items-center justify-center bg-primary text-primary-foreground p-3 rounded-full shadow-lg animate-pulse">
-          <Bell className="h-5 w-5" />
+        <div className="flex items-center justify-center bg-primary text-primary-foreground p-2 rounded-full shadow-lg animate-pulse">
+          <Bell className="h-4 w-4" />
           <Badge 
             variant="destructive"
-            className="absolute -top-2 -right-2 w-6 h-6 flex items-center justify-center"
+            className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center"
           >
             {participants.filter(p => !processedParticipants.has(p.id)).length}
           </Badge>
