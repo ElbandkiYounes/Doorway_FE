@@ -12,6 +12,15 @@ const nextConfig = {
     }
     return config;
   },
+  // Add additional Socket.IO proxy config
+  async rewrites() {
+    return [
+      {
+        source: '/socket.io/:path*',
+        destination: '/api/meeting-signaling',
+      },
+    ];
+  },
 }
 
 module.exports = nextConfig

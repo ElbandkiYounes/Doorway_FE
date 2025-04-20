@@ -10,9 +10,10 @@ import { ParticipantsNotification } from '@/components/meeting/participants-noti
 import { MeetingProvider, useMeeting } from '@/lib/meeting-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X, Code } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'react-toastify';
+import { CodeEditor } from '@/components/meeting/code-editor';
 
 // Store user ID in sessionStorage to prevent regeneration on refresh/HMR
 const getOrCreateUserId = () => {
@@ -28,7 +29,8 @@ const getOrCreateUserId = () => {
   return uuidv4(); // Fallback for SSR
 };
 
-function MeetingContent() {
+function MeetingContent({ userId }: { userId: string }) {
+  const params = useParams();
   const { 
     participants, 
     waitingParticipants,
@@ -48,6 +50,7 @@ function MeetingContent() {
   } = useMeeting();
   
   const router = useRouter();
+  const [isCodeEditorVisible, setIsCodeEditorVisible] = useState(true);
   
   // Find the host participant if we're not the host
   const hostParticipant = !isHost ? participants.find(p => p.id === "host") : null;
@@ -101,33 +104,77 @@ function MeetingContent() {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      <main className="flex-1 container max-w-6xl mx-auto p-4 pb-24">
-        {/* Video Grid */}
-        <VideoGrid 
-          participants={participants} 
-          localStream={localStream}
-          localAudioEnabled={isAudioEnabled}
-          localVideoEnabled={isVideoEnabled}
-        />
-
-        {/* Waiting Room Notification Panel (only for host) */}
-        {isHost && (
-          <WaitingParticipants
-            participants={waitingParticipants}
-            onAdmit={admitParticipant}
-            onReject={rejectParticipant}
-            onAdmitAll={waitingParticipants.length > 1 ? admitAllParticipants : undefined}
-          />
+    <div className="flex flex-col h-full">
+      <main className="flex-1 flex flex-col lg:flex-row h-full overflow-hidden">
+        {/* Left side - Video Grid */}
+        <div 
+          className={`${
+            isCodeEditorVisible ? 'w-full lg:w-1/2' : 'w-full'
+          } h-full transition-all duration-300 ease-in-out flex flex-col`}
+        >
+          <div className="flex-1 p-1 md:p-2 overflow-hidden">
+            <VideoGrid 
+              participants={participants} 
+              localStream={localStream}
+              localAudioEnabled={isAudioEnabled}
+              localVideoEnabled={isVideoEnabled}
+            />
+          </div>
+        </div>
+        
+        {/* Right side - Code Editor (conditionally rendered) */}
+        {isCodeEditorVisible ? (
+          <div className="w-full lg:w-1/2 h-full border-t lg:border-t-0 lg:border-l transition-all duration-300 ease-in-out flex flex-col">
+            <div className="bg-muted/20 p-2 border-b flex justify-between items-center">
+              <h3 className="text-sm font-medium">Collaborative Code Editor</h3>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setIsCodeEditorVisible(false)}
+                className="h-7 w-7 p-0"
+              >
+                <span className="sr-only">Hide Editor</span>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            {/* Make sure to specify that this div takes all available height */}
+            <div className="flex-1 h-full overflow-hidden">
+              <CodeEditor 
+                roomId={params.id as string}
+                userId={userId}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="fixed bottom-24 right-4 z-10">
+            <Button 
+              onClick={() => setIsCodeEditorVisible(true)}
+              className="shadow-lg"
+              size="sm"
+            >
+              <Code className="h-4 w-4 mr-2" />
+              Code Editor
+            </Button>
+          </div>
         )}
       </main>
       
-      {/* Participants Notification UI - pass correct data */}
+      {/* Waiting Room Notification Panel (only for host) */}
+      {isHost && (
+        <WaitingParticipants
+          participants={waitingParticipants}
+          onAdmit={admitParticipant}
+          onReject={rejectParticipant}
+          onAdmitAll={waitingParticipants.length > 1 ? admitAllParticipants : undefined}
+        />
+      )}
+      
+      {/* Participants Notification UI */}
       <ParticipantsNotification 
         participants={participants} 
         hostName={hostName} 
         isHost={isHost}
-        userName={userName} // Use the actual userName from context
+        userName={userName}
       />
 
       {/* Controls */}
@@ -215,7 +262,7 @@ export default function MeetingPage() {
       userName={userName} // Pass the entered userName
       userId={userIdRef.current}  // Pass the persistent userId
     >
-      <MeetingContent />
+      <MeetingContent userId={userIdRef.current} />
     </MeetingProvider>
   );
 }

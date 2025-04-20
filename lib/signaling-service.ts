@@ -28,6 +28,11 @@ export class SignalingService {
   public onRejected: () => void = () => {};
   public onAdmitted: () => void = () => {};
 
+  // New event callbacks for code editor
+  public onCodeUpdated: (userId: string, code: string, language: string, cursorPosition?: any) => void = () => {};
+  public onCodeExecuted: (userId: string) => void = () => {};
+  public onCodeExecutionResult: (result: string, language: string) => void = () => {};
+
   constructor(roomId: string, userId: string, isHost: boolean, userName?: string) {
     this.roomId = roomId;
     this.userId = userId;
@@ -62,12 +67,15 @@ export class SignalingService {
     }
 
     // Connect to socket.io server with explicit URL and better connection options
-    this.socket = io({
-      transports: ['polling', 'websocket'],
+    this.socket = io('/', {  // Use root path
+      transports: ['websocket', 'polling'],  // Try websocket first
       forceNew: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 2000,
-      timeout: 10000
+      timeout: 20000,  // Increased timeout
+      path: '/socket.io/',  // Make sure the path matches server
+      withCredentials: false,  // Try without credentials
+      autoConnect: true
     });
 
     // Store the socket instance globally to prevent duplicates
@@ -96,7 +104,14 @@ export class SignalingService {
     });
 
     this.socket.on('connect_error', (err) => {
-      console.error('Connection error:', err);
+      console.error('Connection error:', err, err.message);
+      // Try to reconnect with different transport if websocket fails
+      if (this.socket) {
+        console.log('Trying to reconnect with different transport');
+        this.socket.io.opts.transports = ['polling', 'websocket'];
+        this.socket.io.engine.close();
+        this.socket.connect();
+      }
     });
 
     this.socket.on('error', (err) => {
@@ -173,6 +188,23 @@ export class SignalingService {
       // Clear processed notifications on disconnect to avoid memory leaks
       this.processedNotifications.clear();
     });
+
+    // Code editor events
+    this.socket.on('code-updated', (data) => {
+      console.log(`Received code update from: ${data.userId}`);
+      console.log('Code:', data.code);
+      this.onCodeUpdated(data.userId, data.code, data.language, data.cursorPosition);
+    });
+
+    this.socket.on('code-executed', (data) => {
+      console.log(`User ${data.userId} executed code`);
+      this.onCodeExecuted(data.userId);
+    });
+
+    this.socket.on('code-execution-result', (data) => {
+      console.log('Received code execution result');
+      this.onCodeExecutionResult(data.result, data.language);
+    });
   }
 
   // Methods to send signaling messages
@@ -230,6 +262,30 @@ export class SignalingService {
         targetUserId: targetUserId,
         audioEnabled: state.audio,
         videoEnabled: state.video
+      });
+    }
+  }
+
+  // New methods to send code-related messages
+  public updateCode(code: string, language: string, cursorPosition?: any) {
+    if (this.socket) {
+      this.socket.emit('code-update', {
+        roomId: this.roomId,
+        userId: this.userId,
+        code,
+        language,
+        cursorPosition
+      });
+    }
+  }
+
+  public executeCode(code: string, language: string) {
+    if (this.socket) {
+      this.socket.emit('code-execute', {
+        roomId: this.roomId,
+        userId: this.userId,
+        code,
+        language
       });
     }
   }

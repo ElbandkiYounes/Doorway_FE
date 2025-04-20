@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Participant } from '@/lib/meeting-context';
 import { useMeeting } from '@/lib/meeting-context';
-import { User, VideoOff, MicOff } from 'lucide-react';
+import { User, VideoOff, MicOff, X, Code } from 'lucide-react';
 
 interface VideoStreamProps {
   stream: MediaStream;
@@ -212,21 +212,21 @@ export function VideoGrid({ participants, localStream, localAudioEnabled, localV
     const count = participants.length + (localStream ? 1 : 0);
     
     if (count === 1) return "grid-cols-1";
-    if (count === 2) return "grid-cols-2";
-    if (count <= 4) return "grid-cols-2";
-    if (count <= 9) return "grid-cols-3";
-    return "grid-cols-4";
+    if (count === 2) return "grid-cols-1 md:grid-cols-2";
+    if (count <= 4) return "grid-cols-1 md:grid-cols-2";
+    if (count <= 9) return "grid-cols-2 md:grid-cols-3";
+    return "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"; 
   };
   
   return (
-    <div className={`grid ${getGridClass()} gap-4 h-full`}>
+    <div className={`grid ${getGridClass()} gap-1 md:gap-2 lg:gap-4 h-full bg-muted/10 p-1 md:p-2 rounded-lg overflow-hidden`}>
       {/* Local stream */}
       {localStream && (
         <VideoStream 
           stream={localStream} 
-          isMuted={true} // Always mute local stream to prevent echo
-          isLocalUser={true} // Identify this as the local user's stream
-          microphoneEnabled={localAudioEnabled} // Pass actual microphone state
+          isMuted={true}
+          isLocalUser={true}
+          microphoneEnabled={localAudioEnabled}
           isVideoOff={!localVideoEnabled}
           displayName={userName}
         />
@@ -242,7 +242,7 @@ export function VideoGrid({ participants, localStream, localAudioEnabled, localV
             key={participant.id}
             stream={participant.stream} 
             isMuted={!participant.audioEnabled} 
-            isLocalUser={false} // This is a remote participant
+            isLocalUser={false}
             microphoneEnabled={participant.audioEnabled} 
             isVideoOff={!participant.videoEnabled}
             displayName={participant.name} 

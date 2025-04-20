@@ -15,9 +15,11 @@ export default function MeetingLayout({
       enableSystem
       disableTransitionOnChange
     >
-      <div className="min-h-screen flex flex-col">
+      {/* Make sure the main layout has a full height */}
+      <div className="flex flex-col h-screen overflow-hidden">
         <MeetingHeader />
-        <div className="flex-1 pt-14"> {/* Add top padding to account for fixed header */}
+        {/* Make this div take the remaining height and handle overflow properly */}
+        <div className="flex-1 pt-14 pb-20 h-[calc(100vh-34px-80px)] overflow-hidden">
           {children}
         </div>
       </div>

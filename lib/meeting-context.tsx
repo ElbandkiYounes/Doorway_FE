@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
 import { WebRTCService } from './webrtc-service';
 import { WaitingParticipant } from '@/components/meeting/waiting-participants';
 import { v4 as uuidv4 } from 'uuid'; // You'll need to install uuid package
@@ -15,7 +15,7 @@ export type Participant = {
 };
 
 // Define meeting context type
-type MeetingContextType = {
+export interface MeetingContextType {
   participants: Participant[];
   waitingParticipants: WaitingParticipant[];
   localStream: MediaStream | null;
@@ -35,10 +35,12 @@ type MeetingContextType = {
   rejectParticipant: (participantId: string) => void;
   admitAllParticipants: () => void;
   leaveCall: () => void;
-};
+  sendCodeUpdate: (code: string, language: string) => void;
+  remoteCode: { code: string, language: string } | null;
+}
 
 // Create context
-const MeetingContext = createContext<MeetingContextType | null>(null);
+export const MeetingContext = createContext<MeetingContextType | null>(null);
 
 // Context provider props
 type MeetingProviderProps = {
@@ -68,6 +70,7 @@ export const MeetingProvider = ({
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [remoteCode, setRemoteCode] = useState<{ code: string, language: string } | null>(null);
 
   const webrtcServiceRef = useRef<WebRTCService | null>(null);
 
@@ -135,6 +138,12 @@ export const MeetingProvider = ({
               setIsRejected(true);
             }
           );
+
+          // Set up code sync callback
+          service.setCodeSyncCallback((code, language, senderId) => {
+            console.log(`Received code update from ${senderId}`);
+            setRemoteCode({ code, language });
+          });
 
           // Initialize media
           if (isMounted) {
@@ -263,6 +272,12 @@ export const MeetingProvider = ({
     window.location.href = `/meeting/call-ended?isHost=${isHost}`;
   };
 
+  const sendCodeUpdate = useCallback((code: string, language: string) => {
+    if (webrtcServiceRef.current) {
+      webrtcServiceRef.current.sendCodeUpdate(code, language);
+    }
+  }, []);
+
   return (
     <MeetingContext.Provider value={{
       participants,
@@ -283,7 +298,9 @@ export const MeetingProvider = ({
       admitParticipant,
       rejectParticipant,
       admitAllParticipants,
-      leaveCall
+      leaveCall,
+      sendCodeUpdate,
+      remoteCode
     }}>
       {children}
     </MeetingContext.Provider>
