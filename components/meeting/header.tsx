@@ -14,12 +14,12 @@ export function MeetingHeader() {
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
         <div className="flex items-center gap-2 font-semibold">
           <Link href="/" className="flex items-center">
-            <span className="text-primary text-xl mr-1">Doorway</span>
+            <span className="text-primary text-xl ml-5 mr-1">Doorway</span>
             <span className="text-muted-foreground text-sm">Meeting</span>
           </Link>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mr-5">
           <Button
             variant="ghost"
             size="icon"
