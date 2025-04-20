@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useMeeting } from '@/lib/meeting-context';
 import Editor from '@monaco-editor/react';
 import { useTheme } from 'next-themes';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Code } from 'lucide-react';
 
 interface CodeEditorProps {
   roomId: string;
@@ -42,8 +44,7 @@ export function CodeEditor({ roomId, userId }: CodeEditorProps) {
     setIsEditing(false);
   };
 
-  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newLanguage = e.target.value;
+  const handleLanguageChange = (newLanguage: string) => {
     setLanguage(newLanguage);
     sendCodeUpdate(code, newLanguage);
   };
@@ -51,17 +52,21 @@ export function CodeEditor({ roomId, userId }: CodeEditorProps) {
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-2 p-2 bg-muted/20">
-        <select 
-          value={language}
-          onChange={handleLanguageChange}
-          className="text-xs p-1 rounded border border-border bg-background"
-        >
-          <option value="javascript">JavaScript</option>
-          <option value="typescript">TypeScript</option>
-          <option value="python">Python</option>
-          <option value="java">Java</option>
-          <option value="csharp">C#</option>
-        </select>
+        <Select value={language} onValueChange={handleLanguageChange}>
+          <SelectTrigger className="w-[180px] h-8 text-xs">
+            <div className="flex items-center gap-2">
+              <Code className="h-4 w-4" />
+              <SelectValue placeholder="Select language" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="javascript">JavaScript</SelectItem>
+            <SelectItem value="typescript">TypeScript</SelectItem>
+            <SelectItem value="python">Python</SelectItem>
+            <SelectItem value="java">Java</SelectItem>
+            <SelectItem value="csharp">C#</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <div className="flex-1">
         <Editor
