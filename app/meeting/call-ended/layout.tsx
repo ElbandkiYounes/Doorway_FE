@@ -3,7 +3,7 @@
 import { ThemeProvider } from '@/components/theme-provider';
 import { MeetingHeader } from '@/components/meeting/header';
 
-export default function MeetingLayout({
+export default function CallEndedLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -15,11 +15,9 @@ export default function MeetingLayout({
       enableSystem
       disableTransitionOnChange
     >
-      {/* Make sure the main layout has a full height */}
-      <div className="flex flex-col h-screen overflow-hidden">
+      <div className="min-h-screen flex flex-col">
         <MeetingHeader />
-        {/* Make this div take the remaining height and handle overflow properly */}
-        <div className="flex-1 pt-14 pb-20 h-[calc(100vh-34px-80px)] overflow-hidden">
+        <div className="flex-1 pt-14"> {/* Add top padding to account for fixed header */}
           {children}
         </div>
       </div>
