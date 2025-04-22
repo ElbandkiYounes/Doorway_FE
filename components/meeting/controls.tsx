@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Video, VideoOff, Monitor, PhoneOff, UserPlus } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, PhoneOff, UserPlus } from "lucide-react";
 import { useMeeting } from '@/lib/meeting-context';
 import { toast } from 'react-toastify';
 
@@ -14,10 +14,8 @@ export function ControlBar({ isHost }: ControlBarProps) {
   const { 
     isAudioEnabled, 
     isVideoEnabled, 
-    isScreenSharing,
     toggleAudio,
     toggleVideo,
-    toggleScreenShare,
     leaveCall,
     userName
   } = useMeeting();
@@ -84,16 +82,6 @@ export function ControlBar({ isHost }: ControlBarProps) {
             {!isVideoEnabled && (
               <span className="absolute -top-1 -right-1 w-2 h-2 md:w-3 md:h-3 bg-red-500 rounded-full border-2 border-background"></span>
             )}
-          </Button>
-          
-          <Button 
-            variant={isScreenSharing ? "secondary" : "outline"} 
-            size="icon"
-            onClick={toggleScreenShare}
-            className={`h-9 w-9 md:h-10 md:w-10 ${isScreenSharing ? "bg-amber-500/20 border-amber-500 text-amber-700" : ""}`}
-            title={isScreenSharing ? "Stop sharing" : "Share screen"}
-          >
-            <Monitor className="h-4 w-4 md:h-5 md:w-5" />
           </Button>
         </div>
         

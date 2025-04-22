@@ -406,51 +406,6 @@ export class WebRTCService {
     }
   }
 
-  public async startScreenShare() {
-    try {
-      const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-
-      // Replace video track with screen share track
-      const videoTrack = screenStream.getVideoTracks()[0];
-
-      this.peerConnections.forEach((peerConnection) => {
-        const senders = peerConnection.getSenders();
-        const videoSender = senders.find(sender =>
-          sender.track?.kind === 'video'
-        );
-        if (videoSender) {
-          videoSender.replaceTrack(videoTrack);
-        }
-      });
-
-      // When screen sharing stops
-      videoTrack.onended = () => {
-        this.stopScreenShare();
-      };
-
-      return screenStream;
-    } catch (error) {
-      console.error('Error starting screen share:', error);
-      throw error;
-    }
-  }
-
-  public async stopScreenShare() {
-    if (this.localStream) {
-      const videoTrack = this.localStream.getVideoTracks()[0];
-
-      this.peerConnections.forEach((peerConnection) => {
-        const senders = peerConnection.getSenders();
-        const videoSender = senders.find(sender =>
-          sender.track?.kind === 'video'
-        );
-        if (videoSender) {
-          videoSender.replaceTrack(videoTrack);
-        }
-      });
-    }
-  }
-
   public disconnect() {
     // Close all peer connections
     this.peerConnections.forEach(connection => {

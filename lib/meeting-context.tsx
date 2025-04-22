@@ -25,12 +25,10 @@ export interface MeetingContextType {
   isRejected: boolean;
   isAudioEnabled: boolean;
   isVideoEnabled: boolean;
-  isScreenSharing: boolean;
   error: string | null;
   userName: string; // Add userName to the context
   toggleAudio: () => void;
   toggleVideo: () => void;
-  toggleScreenShare: () => void;
   admitParticipant: (participantId: string) => void;
   rejectParticipant: (participantId: string) => void;
   admitAllParticipants: () => void;
@@ -68,7 +66,6 @@ export const MeetingProvider = ({
   const [isRejected, setIsRejected] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [remoteCode, setRemoteCode] = useState<{ code: string, language: string } | null>(null);
 
@@ -220,23 +217,6 @@ export const MeetingProvider = ({
     }
   };
 
-  // Screen sharing toggle
-  const toggleScreenShare = async () => {
-    if (!webrtcServiceRef.current) return;
-
-    if (!isScreenSharing) {
-      try {
-        await webrtcServiceRef.current.startScreenShare();
-        setIsScreenSharing(true);
-      } catch (err) {
-        console.error('Failed to start screen sharing:', err);
-      }
-    } else {
-      await webrtcServiceRef.current.stopScreenShare();
-      setIsScreenSharing(false);
-    }
-  };
-
   // Admit participant from waiting room
   const admitParticipant = (participantId: string) => {
     if (webrtcServiceRef.current && isHost) {
@@ -289,12 +269,10 @@ export const MeetingProvider = ({
       isRejected,
       isAudioEnabled,
       isVideoEnabled,
-      isScreenSharing,
       error,
       userName, // Expose userName to the context
       toggleAudio,
       toggleVideo,
-      toggleScreenShare,
       admitParticipant,
       rejectParticipant,
       admitAllParticipants,
