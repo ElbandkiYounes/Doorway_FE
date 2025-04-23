@@ -19,6 +19,7 @@ interface AuthContextType {
   logout: () => void;
   loading: boolean;
   validateCurrentToken: () => Promise<boolean>;
+  isAdmin: () => boolean; // Nouvelle fonction pour vérifier si l'utilisateur est admin
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -86,6 +87,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Function to check if user is an admin (based on email)
+  const isAdmin = (): boolean => {
+    return user?.email === 'admin@doorway.com';
+  };
+
   // Login function - store token and user data
   const login = (newToken: string, userData: User) => {
     localStorage.setItem('doorway_token', newToken);
@@ -111,7 +117,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     logout,
     loading,
-    validateCurrentToken
+    validateCurrentToken,
+    isAdmin
   };
 
   return (

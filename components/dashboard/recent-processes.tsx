@@ -10,7 +10,11 @@ import { formatDate } from "@/lib/utils"
 import { Briefcase } from "lucide-react"
 import Link from "next/link"
 
-export function RecentProcesses() {
+interface RecentProcessesProps {
+  className?: string;
+}
+
+export function RecentProcesses({ className }: RecentProcessesProps) {
   const [processes, setProcesses] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -58,7 +62,7 @@ export function RecentProcesses() {
   }, [])
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle>Recent Processes</CardTitle>
         <CardDescription>Recently started interviewing processes</CardDescription>

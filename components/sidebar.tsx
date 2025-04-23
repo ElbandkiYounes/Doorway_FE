@@ -7,42 +7,51 @@ import { Users, UserCircle, Calendar, ClipboardList, Briefcase, School, LayoutDa
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useMobile } from "@/hooks/use-mobile"
+import { useAuth } from "@/lib/auth-context"
 
+// Définir les éléments de navigation avec une propriété adminOnly pour les routes que seul l'admin peut voir
 const navItems = [
   {
     title: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+    adminOnly: false, // Visible pour tous
   },
   {
     title: "Interviewees",
     href: "/dashboard/interviewees",
     icon: Users,
+    adminOnly: false, // Visible pour tous
   },
   {
     title: "Interviewers",
     href: "/dashboard/interviewers",
     icon: UserCircle,
+    adminOnly: true, // Seulement pour admin
   },
   {
     title: "Interviews",
     href: "/dashboard/interviews",
     icon: Calendar,
+    adminOnly: false, // Visible pour tous
   },
   {
     title: "Questions",
     href: "/dashboard/questions",
     icon: ClipboardList,
+    adminOnly: false, // Visible pour tous
   },
   {
     title: "Roles",
     href: "/dashboard/roles",
     icon: Briefcase,
+    adminOnly: false, // Visible pour tous
   },
   {
     title: "Schools",
     href: "/dashboard/schools",
     icon: School,
+    adminOnly: false, // Visible pour tous
   },
 ]
 
@@ -50,10 +59,19 @@ export function Sidebar() {
   const pathname = usePathname()
   const isMobile = useMobile()
   const [isOpen, setIsOpen] = useState(false)
+  const { isAdmin } = useAuth()
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen)
   }
+
+  // Filtrer les éléments de navigation selon le rôle
+  const filteredNavItems = navItems.filter(item => {
+    // Si l'utilisateur est admin, montrer tous les éléments
+    if (isAdmin()) return true
+    // Sinon, ne montrer que les éléments non-admin
+    return !item.adminOnly
+  })
 
   if (isMobile) {
     return (
@@ -74,14 +92,14 @@ export function Sidebar() {
                 </Button>
               </div>
               <nav className="space-y-1 p-2">
-                {navItems.map((item) => (
+                {filteredNavItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={toggleSidebar}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all hover:bg-accent",
-                      pathname === item.href || pathname.startsWith(`${item.href}/`)
+                      pathname === item.href || (pathname?.startsWith(`${item.href}/`) ?? false)
                         ? "bg-accent text-accent-foreground"
                         : "text-muted-foreground",
                     )}
@@ -106,13 +124,13 @@ export function Sidebar() {
         </div>
         <div className="flex-grow flex flex-col overflow-y-auto">
           <nav className="flex-1 space-y-1 px-2 py-4">
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all hover:bg-accent",
-                  pathname === item.href || pathname.startsWith(`${item.href}/`)
+                  pathname === item.href || (pathname?.startsWith(`${item.href}/`) ?? false)
                     ? "bg-accent text-accent-foreground"
                     : "text-muted-foreground",
                 )}

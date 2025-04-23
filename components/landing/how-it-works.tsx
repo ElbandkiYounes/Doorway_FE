@@ -1,5 +1,3 @@
-import { Steps } from "lucide-react";
-
 const steps = [
   {
     title: "Apply",

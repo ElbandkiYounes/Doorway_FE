@@ -6,7 +6,11 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recha
 import { intervieweeAPI, interviewAPI, Decision } from "@/lib/api-service"
 import { Skeleton } from "@/components/ui/skeleton"
 
-export function IntervieweeStatusChart() {
+interface IntervieweeStatusChartProps {
+  className?: string;
+}
+
+export function IntervieweeStatusChart({ className }: IntervieweeStatusChartProps) {
   const [chartData, setChartData] = useState<{ name: string; value: number; color: string }[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -60,7 +64,7 @@ export function IntervieweeStatusChart() {
   }, [])
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle>Interviewee Status</CardTitle>
         <CardDescription>Distribution of interviewees by current status</CardDescription>
