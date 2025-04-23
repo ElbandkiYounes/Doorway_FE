@@ -214,7 +214,7 @@ export default function ApplyPage() {
       }
       
       // Send to the public endpoint using the API_URL environment variable
-      await axios.post(`${API_URL}/api/public/applications`, apiFormData, {
+      await axios.post(`${API_URL}/api/public/    rm -f /home/mouad/Documents/PFA/Doorway_FE/components/principle-question-table.tsx /home/mouad/Documents/PFA/Doorway_FE/components/technical-question-table.tsx /home/mouad/Documents/PFA/Doorway_FE/components/role-table.tsx /home/mouad/Documents/PFA/Doorway_FE/components/school-table.tsxns`, apiFormData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         }
