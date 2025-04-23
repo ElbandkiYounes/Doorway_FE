@@ -16,9 +16,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { NavBar } from "@/components/landing/nav-bar";
 import axios from "axios";
+import { config } from "@/lib/config";
 
-// Read the API URL from environment variables
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+// Read the API URL from config
+const API_URL = config.apiUrl;
 
 export default function ApplyPage() {
   const [formData, setFormData] = useState<{
@@ -202,9 +203,11 @@ export default function ApplyPage() {
         dateOfBirth: formData.dateOfBirth ? formData.dateOfBirth.toISOString().split("T")[0] : null,
       };
       
-      apiFormData.append('payload', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+      // Use the correct content type for the JSON part
+      const payloadBlob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+      apiFormData.append('payload', payloadBlob);
       
-      // Append files
+      // Append files with the exact names expected by the controller
       if (profileImage) {
         apiFormData.append('image', profileImage);
       }
@@ -213,13 +216,14 @@ export default function ApplyPage() {
         apiFormData.append('resume', resume);
       }
       
-      // Send to the public endpoint using the API_URL environment variable
-      await axios.post(`${API_URL}/api/public/    rm -f /home/mouad/Documents/PFA/Doorway_FE/components/principle-question-table.tsx /home/mouad/Documents/PFA/Doorway_FE/components/technical-question-table.tsx /home/mouad/Documents/PFA/Doorway_FE/components/role-table.tsx /home/mouad/Documents/PFA/Doorway_FE/components/school-table.tsxns`, apiFormData, {
+      // Send to the public applications endpoint as defined in the controller
+      const response = await axios.post(`${API_URL}/api/public/applications`, apiFormData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         }
       });
       
+      console.log('Application submitted successfully:', response.data);
       toast.success("Application submitted successfully!");
       setSubmitted(true);
       
