@@ -2,20 +2,20 @@ import { Steps } from "lucide-react";
 
 const steps = [
   {
-    title: "Create Account",
-    description: "Set up your professional profile"
+    title: "Apply",
+    description: "Submit your application details"
   },
   {
-    title: "Add Candidates",
-    description: "Import profiles and resumes"
+    title: "Get Scheduled",
+    description: "Receive your interview invitation"
   },
   {
-    title: "Schedule",
-    description: "Organize interview sessions"
+    title: "Interview",
+    description: "Join your virtual interview session"
   },
   {
-    title: "Evaluate",
-    description: "Use our assessment grids"
+    title: "Receive Feedback",
+    description: "Get detailed assessment results"
   }
 ];
 
