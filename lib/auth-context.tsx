@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('doorway_user');
         setToken(null);
         setUser(null);
-        router.push('/login');
+        router.push('/'); // Redirect to home page instead of login
       }
     } catch (error) {
       console.error('Error validating token', error);
@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('doorway_user');
     setToken(null);
     setUser(null);
-    router.push('/login');
+    router.push('/'); // Redirect to home page instead of login
   };
 
   const value = {

@@ -15,7 +15,7 @@ export default function ProtectedRoute({
   useEffect(() => {
     // Check if user is authenticated
     if (!loading && !isAuthenticated) {
-      router.replace("/login");
+      router.replace("/"); // Redirect to home page instead of login
       return;
     }
 
