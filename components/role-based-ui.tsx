@@ -1,21 +1,19 @@
-"use client"
+"use client";
 
-import { ReactNode } from "react"
-import { useAuth } from "@/lib/auth-context"
-import { Role } from "@/lib/api-service"
+import { useAuth } from "@/lib/auth-context";
+import { ReactNode } from "react";
 
 interface RoleBasedUIProps {
-  roles: Role[]
-  children: ReactNode
-  fallback?: ReactNode
+  children: ReactNode;
+  adminOnly?: boolean;
 }
 
-export function RoleBasedUI({ roles, children, fallback }: RoleBasedUIProps) {
-  const { user } = useAuth()
-
-  if (!user || !roles.includes(user.role)) {
-    return fallback || null
+export function RoleBasedUI({ children, adminOnly = false }: RoleBasedUIProps) {
+  const { user } = useAuth();
+  
+  if (adminOnly && user?.role !== "ADMIN") {
+    return null;
   }
 
-  return children
+  return <>{children}</>;
 }

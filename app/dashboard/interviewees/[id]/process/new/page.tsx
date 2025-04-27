@@ -11,7 +11,7 @@ import { toast } from 'react-toastify'
 import { Textarea } from "@/components/ui/textarea"
 
 export default function NewInterviewingProcessPage() {
-  const { id: intervieweeId } = useParams()
+  const { id: intervieweeId } = useParams() as { id: string }
   const router = useRouter()
   
   const [feedback, setFeedback] = useState("")
@@ -44,27 +44,31 @@ export default function NewInterviewingProcessPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!validate()) return
+    
+    if (!validate()) {
+      toast.error("Please fix the errors in the form")
+      return
+    }
 
     try {
       setLoading(true)
-      await interviewingProcessAPI.create(intervieweeId as string, {
-        roleId: roleId as number,
-        feedback: feedback || null
+      await interviewingProcessAPI.create(intervieweeId, {
+        roleId: Number(roleId),
+        feedback,
       })
-      toast.success("Process created successfully")
+      toast.success("Interviewing process created successfully")
       router.push(`/dashboard/interviewees/${intervieweeId}`)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to create process:", error)
-      toast.error("Failed to create process")
+      toast.error(error.message || "Failed to create interviewing process")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="text-3xl font-bold mb-6">Start New Process</h1>
+    <div className="max-w-2xl mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">New Interviewing Process</h1>
       <Card>
         <form onSubmit={handleSubmit}>
           <CardHeader>
@@ -96,8 +100,8 @@ export default function NewInterviewingProcessPage() {
                 id="feedback"
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
-                placeholder="Add feedback about this process"
-                rows={4}
+                placeholder="Add any initial feedback or notes about the process"
+                className="min-h-[100px]"
               />
             </div>
           </CardContent>
@@ -106,7 +110,6 @@ export default function NewInterviewingProcessPage() {
               type="button"
               variant="outline"
               onClick={() => router.push(`/dashboard/interviewees/${intervieweeId}`)}
-              disabled={loading}
             >
               Cancel
             </Button>

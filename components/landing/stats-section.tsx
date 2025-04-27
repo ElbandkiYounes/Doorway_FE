@@ -1,67 +1,57 @@
-"use client"
+import { Card, CardContent } from "@/components/ui/card";
+import { Users2, CalendarCheck, School, Briefcase } from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card"
-import {
-  Users,
-  VideoIcon,
-  Building2,
-  School2,
-} from "lucide-react"
-import { useTheme } from "next-themes"
+const stats = [
+  {
+    label: "Entretiens Réalisés",
+    value: "500+",
+    icon: CalendarCheck,
+    description: "Entretiens gérés avec succès"
+  },
+  {
+    label: "Recruteurs Actifs",
+    value: "50+",
+    icon: Users2,
+    description: "Professionnels utilisant Doorway"
+  },
+  {
+    label: "Écoles Partenaires",
+    value: "20+",
+    icon: School,
+    description: "Institutions collaboratrices"
+  },
+  {
+    label: "Postes Pourvus",
+    value: "200+",
+    icon: Briefcase,
+    description: "Recrutements réussis"
+  }
+];
 
-interface StatsData {
-  interviewees: number
-  interviews: number
-  roles: number
-  schools: number
-}
-
-interface StatsSectionProps {
-  data: StatsData
-}
-
-export function StatsSection({ data }: StatsSectionProps) {
+export function StatsSection() {
   return (
-    <section className="container py-24">
-      <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-12">
-        By the Numbers
-      </h2>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="flex flex-col items-center p-6">
-            <Users className="h-12 w-12 mb-4 text-primary" />
-            <CardTitle className="text-3xl font-bold mb-2">
-              {data.interviewees}+
-            </CardTitle>
-            <CardDescription>Interviewees</CardDescription>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col items-center p-6">
-            <VideoIcon className="h-12 w-12 mb-4 text-primary" />
-            <CardTitle className="text-3xl font-bold mb-2">
-              {data.interviews}+
-            </CardTitle>
-            <CardDescription>Interviews Conducted</CardDescription>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col items-center p-6">
-            <Building2 className="h-12 w-12 mb-4 text-primary" />
-            <CardTitle className="text-3xl font-bold mb-2">{data.roles}+</CardTitle>
-            <CardDescription>Available Roles</CardDescription>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col items-center p-6">
-            <School2 className="h-12 w-12 mb-4 text-primary" />
-            <CardTitle className="text-3xl font-bold mb-2">
-              {data.schools}+
-            </CardTitle>
-            <CardDescription>Partner Schools</CardDescription>
-          </CardContent>
-        </Card>
+    <section className="py-20 bg-muted/50">
+      <div className="container mx-auto px-4">
+        <h2 className="text-3xl font-bold text-center mb-12">
+          Notre Impact en Chiffres
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((stat, index) => (
+            <Card key={index} className="text-center border-none bg-background">
+              <CardContent className="pt-6">
+                <div className="mb-4 flex justify-center">
+                  <stat.icon className="w-8 h-8 text-primary" />
+                </div>
+                <h3 className="text-3xl font-bold mb-2">{stat.value}</h3>
+                <p className="font-medium mb-2">{stat.label}</p>
+                <p className="text-sm text-muted-foreground">
+                  {stat.description}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </section>
-  )
+  );
 }

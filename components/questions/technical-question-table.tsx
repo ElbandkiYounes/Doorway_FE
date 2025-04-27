@@ -1,35 +1,28 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
+import { useEffect, useState } from "react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { MoreHorizontal, Eye, Edit, Trash } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
+import { MoreHorizontal, Eye, Edit, Trash } from "lucide-react"
 import { technicalQuestionAPI, type TechnicalQuestion } from "@/lib/api-service"
-import { toast } from "react-toastify"
+import Link from "next/link"
 import { QuestionTruncator } from "@/components/question-truncator"
-import { TechnicalQuestionDetails } from "./technical-question-details"
+import { TechnicalQuestionDetails } from "@/components/questions/technical-question-details"
+import { toast } from 'react-toastify'
 
 export function TechnicalQuestionTable() {
   const [questions, setQuestions] = useState<TechnicalQuestion[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null)
+  const [selectedTechnicalQuestionId, setSelectedTechnicalQuestionId] = useState<number | null>(null)
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -39,8 +32,9 @@ export function TechnicalQuestionTable() {
         setQuestions(data)
         setError(null)
       } catch (err) {
-        console.error("Failed to fetch questions:", err)
-        setError("Failed to load questions. Please try again later.")
+        console.error("Failed to fetch technical questions:", err)
+        setError("Failed to load technical questions. Please try again later.")
+        toast.error("Failed to load technical questions. Please try again.")
       } finally {
         setLoading(false)
       }
@@ -50,22 +44,18 @@ export function TechnicalQuestionTable() {
   }, [])
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this question? This action cannot be undone.")) {
-      return
-    }
-
     try {
       await technicalQuestionAPI.delete(id)
-      setQuestions(questions.filter((question) => question.id !== id))
-      toast.success("Question deleted successfully")
-    } catch (err) {
-      console.error("Failed to delete question:", err)
-      toast.error("Failed to delete question")
+      setQuestions(questions.filter((question) => question.id.toString() !== id))
+      toast.success("Technical question deleted successfully")
+    } catch (err: any) {
+      console.error("Failed to delete technical question:", err)
+      toast.error(err.message || "Failed to delete technical question. Please try again.")
     }
   }
 
   if (loading) {
-    return <div className="flex justify-center p-4">Loading questions...</div>
+    return <div className="flex justify-center p-4">Loading technical questions...</div>
   }
 
   if (error) {
@@ -84,32 +74,24 @@ export function TechnicalQuestionTable() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Language</TableHead>
-            <TableHead>Difficulty</TableHead>
-            <TableHead>Description</TableHead>
+            <TableHead className="w-[80%]">Question</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {questions.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-8">
-                No technical questions found. Add your first technical question to get started.
+              <TableCell colSpan={2} className="text-center py-8">
+                No technical questions found. Add your first question to get started.
               </TableCell>
             </TableRow>
           ) : (
             questions.map((question) => (
               <TableRow key={question.id}>
-                <TableCell>{question.title}</TableCell>
-                <TableCell>
-                  <Badge variant="outline">{question.language}</Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge>{question.difficulty}</Badge>
-                </TableCell>
-                <TableCell>
-                  <QuestionTruncator text={question.description} maxLength={100} />
+                <TableCell className="font-medium">
+                  <div className="whitespace-normal break-words">
+                    <QuestionTruncator question={question.question} showButton={false} />
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -120,7 +102,8 @@ export function TechnicalQuestionTable() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setSelectedQuestionId(question.id)}>
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => setSelectedTechnicalQuestionId(question.id)}>
                         <Eye className="mr-2 h-4 w-4" />
                         <span>View Details</span>
                       </DropdownMenuItem>
@@ -132,8 +115,8 @@ export function TechnicalQuestionTable() {
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        onClick={() => handleDelete(question.id)}
                         className="text-destructive"
+                        onClick={() => handleDelete(question.id.toString())}
                       >
                         <Trash className="mr-2 h-4 w-4" />
                         <span>Delete</span>
@@ -146,11 +129,10 @@ export function TechnicalQuestionTable() {
           )}
         </TableBody>
       </Table>
-
-      {selectedQuestionId && (
+      {selectedTechnicalQuestionId && (
         <TechnicalQuestionDetails
-          id={selectedQuestionId}
-          onClose={() => setSelectedQuestionId(null)}
+          id={selectedTechnicalQuestionId}
+          onClose={() => setSelectedTechnicalQuestionId(null)}
         />
       )}
     </div>

@@ -1,13 +1,23 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { intervieweeAPI, interviewerAPI, interviewAPI, interviewingProcessAPI, type Interviewee, type Interviewer, type InterviewingProcess } from "@/lib/api-service"
+import {
+  intervieweeAPI,
+  interviewerAPI,
+  interviewingProcessAPI,
+  interviewAPI,
+  type Interviewee,
+  type Interviewer,
+  type InterviewingProcess,
+} from "@/lib/api-service"
 import { useToast } from "@/hooks/use-toast"
 
 export default function NewInterviewPage() {
@@ -119,14 +129,21 @@ export default function NewInterviewPage() {
     }
   }
 
+  // Get minimum date-time for scheduling (now + 1 hour)
+  const getMinDateTime = () => {
+    const now = new Date()
+    now.setHours(now.getHours() + 1)
+    return now.toISOString().slice(0, 16) // Format: YYYY-MM-DDTHH:MM
+  }
+
   return (
-    <div className="mx-auto max-w-2xl p-4">
+    <div className="mx-auto max-w-2xl">
       <h1 className="text-3xl font-bold mb-6">Schedule New Interview</h1>
-      
-      <form onSubmit={handleSubmit}>
-        <Card>
+      <Card>
+        <form onSubmit={handleSubmit}>
           <CardHeader>
             <CardTitle>Interview Details</CardTitle>
+            <CardDescription>Schedule a new interview for an interviewee.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -234,11 +251,5 @@ export default function NewInterviewPage() {
       </Card>
     </div>
   )
-}
-
-function getMinDateTime() {
-  const now = new Date()
-  now.setHours(now.getHours() + 1)
-  return now.toISOString().slice(0, 16) // Format: YYYY-MM-DDTHH:mm
 }
 

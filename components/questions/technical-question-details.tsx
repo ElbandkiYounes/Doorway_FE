@@ -1,116 +1,64 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { technicalQuestionAPI, type TechnicalQuestion } from "@/lib/api-service"
-import { toast } from "react-toastify"
+import { toast } from 'react-toastify'
+import { X } from "lucide-react"
 
-interface TechnicalQuestionDetailsProps {
-  id: string
-  onClose: () => void
-}
-
-export function TechnicalQuestionDetails({ id, onClose }: TechnicalQuestionDetailsProps) {
-  const [question, setQuestion] = useState<TechnicalQuestion | null>(null)
+export function TechnicalQuestionDetails({ id, onClose }: { id: number; onClose: () => void }) {
+  const [questionDetail, setQuestionDetail] = useState<TechnicalQuestion | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchQuestion = async () => {
+    const fetchDetail = async () => {
       try {
         setLoading(true)
-        const data = await technicalQuestionAPI.getById(id)
-        setQuestion(data)
-      } catch (err) {
-        console.error("Failed to fetch question:", err)
-        toast.error("Could not load question details")
+        const data = await technicalQuestionAPI.getById(id.toString())
+        setQuestionDetail(data)
+      } catch (error: any) {
+        toast.error(error.message || "Failed to load question details")
       } finally {
         setLoading(false)
       }
     }
-
-    if (id) {
-      fetchQuestion()
-    }
+    fetchDetail()
   }, [id])
 
-  return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>Question Details</DialogTitle>
-          <DialogDescription>View detailed information about this question.</DialogDescription>
-        </DialogHeader>
-
-        {loading ? (
-          <div className="text-center py-4">Loading...</div>
-        ) : !question ? (
-          <div className="text-center py-4 text-destructive">Failed to load question details</div>
-        ) : (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <Badge>{question.difficulty}</Badge>
-              <Badge variant="outline">{question.language}</Badge>
+  const modal = (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <Card className="max-w-lg w-full mx-4 relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute right-2 top-2"
+          onClick={onClose}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+        <CardHeader>
+          <h2 className="text-xl font-bold">Technical Question Details</h2>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div>Loading...</div>
+          ) : questionDetail ? (
+            <div className="overflow-auto max-h-80 whitespace-normal break-words">
+              <p className="font-medium">Question:</p>
+              <p>{questionDetail.question}</p>
             </div>
-
-            <Tabs defaultValue="question">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="question">Question</TabsTrigger>
-                <TabsTrigger value="examples">Examples</TabsTrigger>
-                <TabsTrigger value="solution">Solution</TabsTrigger>
-              </TabsList>
-              <TabsContent value="question" className="space-y-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <h3>{question.title}</h3>
-                      <p>{question.description}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="examples" className="space-y-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4">
-                      {question.examples.map((example, index) => (
-                        <div key={index} className="prose prose-sm dark:prose-invert max-w-none">
-                          <h4>Example {index + 1}</h4>
-                          <pre>{example}</pre>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="solution" className="space-y-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <p>{question.solution}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        )}
-
-        <div className="flex justify-end">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          ) : (
+            <p>No details found.</p>
+          )}
+        </CardContent>
+        <CardFooter>
+          <Button onClick={onClose}>Close</Button>
+        </CardFooter>
+      </Card>
+    </div>
   )
+
+  return <>{typeof window !== "undefined" && createPortal(modal, document.body)}</>
 }

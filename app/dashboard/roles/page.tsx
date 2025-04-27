@@ -1,9 +1,9 @@
 "use client"
 
-import Link from "next/link"
-import { PlusCircle } from "lucide-react"
 import { RoleTable } from "@/components/roles/role-table"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { PlusCircle } from "lucide-react"
 
 export default function RolesPage() {
   return (

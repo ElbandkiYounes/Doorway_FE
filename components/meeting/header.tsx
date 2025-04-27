@@ -1,57 +1,37 @@
-"use client"
+'use client';
 
-import Link from "next/link"
-import { MoreHorizontal } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import React from 'react';
+import Link from 'next/link';
+import { Moon, Sun } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useTheme } from 'next-themes';
 
-interface HeaderProps {
-  participantCount: number
-  isRecording?: boolean
-  onLeave: () => void
-  intervieweeName?: string
-  interviewerName?: string
-}
-
-export function Header({ participantCount, isRecording, onLeave, intervieweeName, interviewerName }: HeaderProps) {
+export function MeetingHeader() {
+  const { theme, setTheme } = useTheme();
+  
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard">
-            <img src="/placeholder-logo.svg" alt="Logo" className="h-8" />
+    <header className="fixed top-0 left-0 right-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
+        <div className="flex items-center gap-2 font-semibold">
+          <Link href="/" className="flex items-center">
+            <span className="text-primary text-xl ml-5 mr-1">Doorway</span>
+            <span className="text-muted-foreground text-sm">Meeting</span>
           </Link>
-          <div className="flex items-center gap-2">
-            {intervieweeName && (
-              <Badge variant="outline">Interviewee: {intervieweeName}</Badge>
-            )}
-            {interviewerName && (
-              <Badge variant="outline">Interviewer: {interviewerName}</Badge>
-            )}
-          </div>
         </div>
-
-        <div className="flex items-center gap-4">
-          <Badge variant="outline">
-            {participantCount} {participantCount === 1 ? "participant" : "participants"}
-          </Badge>
-          {isRecording && (
-            <Badge variant="destructive" className="animate-pulse">Recording</Badge>
-          )}
-          <div className="w-px h-6 bg-border" />
-          <Button variant="destructive" size="sm" onClick={onLeave}>
-            Leave
+        
+        <div className="flex items-center gap-2 mr-5">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            title="Toggle theme"
+          >
+            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">Toggle theme</span>
           </Button>
         </div>
       </div>
     </header>
-  )
+  );
 }

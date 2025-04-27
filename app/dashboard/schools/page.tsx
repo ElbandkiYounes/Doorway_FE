@@ -1,9 +1,9 @@
 "use client"
 
-import Link from "next/link"
-import { PlusCircle } from "lucide-react" 
 import { SchoolTable } from "@/components/schools/school-table"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { PlusCircle } from "lucide-react"
 
 export default function SchoolsPage() {
   return (

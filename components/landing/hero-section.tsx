@@ -1,39 +1,48 @@
-"use client"
-
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { useAuth } from "@/lib/auth-context"
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { useAuth } from "@/lib/auth-context";
 
 export function HeroSection() {
-  const { user } = useAuth()
+  const { isAuthenticated } = useAuth();
 
   return (
-    <section className="container flex flex-col items-center gap-4 pb-8 pt-6 md:py-10">
-      <div className="flex max-w-[980px] flex-col items-center gap-2 text-center">
-        <h1 className="text-3xl font-bold leading-tight tracking-tighter md:text-6xl lg:leading-[1.1]">
-          Level Up Your Interview Game
-        </h1>
-        <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
-          Practice technical interviews with experienced engineers. Get real-time feedback
-          and improve your chances of landing your dream job.
-        </p>
+    <div className="relative h-full flex items-center justify-center">
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+      <div className="text-center px-4">
+        <div className="space-y-4 max-w-3xl mx-auto">
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tighter">
+            Simplify your <span className="text-primary">job interviews</span>
+          </h1>
+          <p className="text-base md:text-lg text-muted-foreground max-w-[600px] mx-auto">
+            Doorway centralizes your recruitment process in one accessible and organized place.
+          </p>
+          <div className="flex justify-center items-center gap-4">
+            {isAuthenticated ? (
+              <Link href="/dashboard">
+                <Button size="lg" className="gap-2">
+                  Access Dashboard
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="outline" size="lg">
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/apply">
+                  <Button size="lg" className="gap-2">
+                    Apply Now
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
       </div>
-      <div className="flex gap-4">
-        {user ? (
-          <Button asChild size="lg">
-            <Link href="/dashboard">Go to Dashboard</Link>
-          </Button>
-        ) : (
-          <>
-            <Button asChild size="lg">
-              <Link href="/login">Get Started</Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="/contact">Contact Us</Link>
-            </Button>
-          </>
-        )}
-      </div>
-    </section>
-  )
+    </div>
+  );
 }
