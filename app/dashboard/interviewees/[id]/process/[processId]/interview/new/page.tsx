@@ -14,7 +14,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { interviewAPI, interviewerAPI, type Interviewer } from "@/lib/api-service"
-import { toast } from 'react-toastify'
+import { toast } from "react-toastify"
 
 interface FormData {
   interviewerId: string;
@@ -24,10 +24,9 @@ interface FormData {
 }
 
 interface FormErrors {
-  [key: string]: string; // Add index signature
-  interviewerId: string;
-  scheduledAt: string;
-  interviewTime: string;
+  interviewerId?: string;
+  scheduledAt?: string;
+  interviewTime?: string;
 }
 
 export default function NewInterviewPage() {

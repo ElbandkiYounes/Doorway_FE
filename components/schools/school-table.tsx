@@ -1,36 +1,31 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useState, useEffect } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { MoreHorizontal, Edit, Trash } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Edit, Trash } from "lucide-react"
 import { schoolAPI, type School } from "@/lib/api-service"
-import Link from "next/link"
-import { toast } from 'react-toastify'
+import { toast } from "react-toastify"
 
 export function SchoolTable() {
   const [schools, setSchools] = useState<School[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [schoolToDelete, setSchoolToDelete] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchSchools = async () => {
@@ -42,7 +37,6 @@ export function SchoolTable() {
       } catch (err) {
         console.error("Failed to fetch schools:", err)
         setError("Failed to load schools. Please try again later.")
-        toast.error("Failed to load schools. Please try again.")
       } finally {
         setLoading(false)
       }
@@ -51,21 +45,18 @@ export function SchoolTable() {
     fetchSchools()
   }, [])
 
-  const handleDelete = async () => {
-    if (!schoolToDelete) return
-    
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this school? This action cannot be undone.")) {
+      return
+    }
+
     try {
-      setIsDeleting(true)
-      await schoolAPI.delete(schoolToDelete)
-      setSchools(schools.filter((school) => school.id.toString() !== schoolToDelete))
+      await schoolAPI.delete(id)
+      setSchools(schools.filter((school) => school.id !== id))
       toast.success("School deleted successfully")
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to delete school:", err)
-      toast.error(err.message || "Failed to delete school. Please try again.")
-    } finally {
-      setIsDeleting(false)
-      setIsDeleteDialogOpen(false)
-      setSchoolToDelete(null)
+      toast.error("Failed to delete school")
     }
   }
 
@@ -85,91 +76,59 @@ export function SchoolTable() {
   }
 
   return (
-    <>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>School Name</TableHead>
+            <TableHead>Location</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {schools.length === 0 ? (
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableCell colSpan={3} className="text-center py-8">
+                No schools found. Add your first school to get started.
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {schools.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={2} className="text-center py-8">
-                  No schools found. Add your first school to get started.
+          ) : (
+            schools.map((school) => (
+              <TableRow key={school.id}>
+                <TableCell>{school.name}</TableCell>
+                <TableCell>{school.location}</TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Open menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/schools/${school.id}/edit`}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          <span>Edit</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(school.id)}
+                        className="text-destructive"
+                      >
+                        <Trash className="mr-2 h-4 w-4" />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ) : (
-              schools.map((school) => (
-                <TableRow key={school.id}>
-                  <TableCell className="font-medium">{school.name}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Open menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/schools/${school.id}/edit`}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            <span>Edit</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          className="text-destructive" 
-                          onClick={() => {
-                            setSchoolToDelete(school.id.toString())
-                            setIsDeleteDialogOpen(true)
-                          }}
-                        >
-                          <Trash className="mr-2 h-4 w-4" />
-                          <span>Delete</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete School</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this school? This action cannot be undone
-              and will affect all interviewees associated with this school.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex space-x-2 justify-end">
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
-              disabled={isDeleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
   )
 }
 

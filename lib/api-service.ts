@@ -29,14 +29,24 @@ async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise
 
     if (!response.ok) {
       const errorData = await response.json();
-      if (errorData.message && errorData.message.includes("JWT expired")) {
-        console.error("JWT expired. Logging out...");
-        localStorage.clear();
-        window.location.href = "/login"; // Redirect to login page
+
+      // Handle different error cases
+      if (response.status === 401 || response.status === 403) {
+        if (errorData.message && errorData.message.includes("JWT expired")) {
+          console.error("JWT expired. Logging out...");
+          localStorage.clear();
+          window.location.href = "/login";
+        } else {
+          // For other auth errors, set unauthorized state in RoleGuard
+          localStorage.setItem('doorway_unauthorized', 'true');
+          throw new Error('Unauthorized: You do not have permission to access this resource');
+        }
       }
+
       throw new Error(errorData.message || `API request failed with status ${response.status}`);
     }
 
+    // For 204 No Content responses
     if (response.status === 204) {
       return {} as T;
     }
@@ -70,6 +80,16 @@ async function fetchFormDataAPI<T>(endpoint: string, formData: FormData, method 
     let errorMessage = `API request failed with status ${response.status}`;
     try {
       const errorData = await response.json();
+      if (response.status === 401 || response.status === 403) {
+        if (errorData.message && errorData.message.includes("JWT expired")) {
+          console.error("JWT expired. Logging out...");
+          localStorage.clear();
+          window.location.href = "/login";
+        } else {
+          localStorage.setItem('doorway_unauthorized', 'true');
+          throw new Error('Unauthorized: You do not have permission to access this resource');
+        }
+      }
       errorMessage = errorData.message || errorMessage;
     } catch (e) {
       // If parsing JSON fails, use the default error message

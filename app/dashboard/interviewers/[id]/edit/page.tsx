@@ -10,8 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { interviewerAPI, roleAPI, type Interviewer, type Role } from "@/lib/api-service"
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
-import { InterviewerDetails } from "@/components/interviewers/interviewer-details"
 
 export default function EditInterviewerPage() {
   // ...existing state declarations...

@@ -1,37 +1,34 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useState, useEffect } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { MoreHorizontal, Eye, Edit, Trash } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Eye, Edit, Trash } from "lucide-react"
 import { principleQuestionAPI, type PrincipleQuestion } from "@/lib/api-service"
-import Link from "next/link"
+import { toast } from "react-toastify"
 import { QuestionTruncator } from "@/components/question-truncator"
-import { PrincipleQuestionDetails } from "@/components/questions/principle-question-details"
-import { toast } from 'react-toastify'
-
-// Helper function to format principle enum values
-const formatPrinciple = (principle: string) => {
-  return principle
-    .split("_")
-    .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
-    .join(" ")
-}
+import { PrincipleQuestionDetails } from "./principle-question-details"
 
 export function PrincipleQuestionTable() {
   const [questions, setQuestions] = useState<PrincipleQuestion[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedPrincipleQuestionId, setSelectedPrincipleQuestionId] = useState<number | null>(null)
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -41,9 +38,8 @@ export function PrincipleQuestionTable() {
         setQuestions(data)
         setError(null)
       } catch (err) {
-        console.error("Failed to fetch principle questions:", err)
-        setError("Failed to load principle questions. Please try again later.")
-        toast.error("Failed to load principle questions. Please try again.")
+        console.error("Failed to fetch questions:", err)
+        setError("Failed to load questions. Please try again later.")
       } finally {
         setLoading(false)
       }
@@ -53,18 +49,22 @@ export function PrincipleQuestionTable() {
   }, [])
 
   const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this question? This action cannot be undone.")) {
+      return
+    }
+
     try {
       await principleQuestionAPI.delete(id)
-      setQuestions(questions.filter((question) => question.id.toString() !== id))
-      toast.success("Principle question deleted successfully")
-    } catch (err: any) {
-      console.error("Failed to delete principle question:", err)
-      toast.error(err.message || "Failed to delete principle question. Please try again.")
+      setQuestions(questions.filter((question) => question.id !== id))
+      toast.success("Question deleted successfully")
+    } catch (err) {
+      console.error("Failed to delete question:", err)
+      toast.error("Failed to delete question")
     }
   }
 
   if (loading) {
-    return <div className="flex justify-center p-4">Loading principle questions...</div>
+    return <div className="flex justify-center p-4">Loading questions...</div>
   }
 
   if (error) {
@@ -83,8 +83,8 @@ export function PrincipleQuestionTable() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[60%]">Question</TableHead>
-            <TableHead>Principle</TableHead>
+            <TableHead>Title</TableHead>
+            <TableHead>Description</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -92,19 +92,15 @@ export function PrincipleQuestionTable() {
           {questions.length === 0 ? (
             <TableRow>
               <TableCell colSpan={3} className="text-center py-8">
-                No principle questions found. Add your first question to get started.
+                No principle questions found. Add your first principle question to get started.
               </TableCell>
             </TableRow>
           ) : (
             questions.map((question) => (
               <TableRow key={question.id}>
-                <TableCell className="font-medium">
-                  <div className="whitespace-normal break-words">
-                    <QuestionTruncator question={question.question} showButton={false} />
-                  </div>
-                </TableCell>
+                <TableCell>{question.title}</TableCell>
                 <TableCell>
-                  <Badge variant="outline">{formatPrinciple(question.principle)}</Badge>
+                  <QuestionTruncator text={question.description} maxLength={100} />
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -115,21 +111,20 @@ export function PrincipleQuestionTable() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => setSelectedPrincipleQuestionId(question.id)}>
+                      <DropdownMenuItem onClick={() => setSelectedQuestionId(question.id)}>
                         <Eye className="mr-2 h-4 w-4" />
                         <span>View Details</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/questions/principle/${question.id}/edit`}>
+                        <Link href={`/dashboard/questions/principles/${question.id}/edit`}>
                           <Edit className="mr-2 h-4 w-4" />
                           <span>Edit</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
+                        onClick={() => handleDelete(question.id)}
                         className="text-destructive"
-                        onClick={() => handleDelete(question.id.toString())}
                       >
                         <Trash className="mr-2 h-4 w-4" />
                         <span>Delete</span>
@@ -142,10 +137,11 @@ export function PrincipleQuestionTable() {
           )}
         </TableBody>
       </Table>
-      {selectedPrincipleQuestionId && (
+
+      {selectedQuestionId && (
         <PrincipleQuestionDetails
-          id={selectedPrincipleQuestionId}
-          onClose={() => setSelectedPrincipleQuestionId(null)}
+          id={selectedQuestionId}
+          onClose={() => setSelectedQuestionId(null)}
         />
       )}
     </div>

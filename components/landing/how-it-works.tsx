@@ -1,46 +1,49 @@
-const steps = [
-  {
-    title: "Apply",
-    description: "Submit your application details"
-  },
-  {
-    title: "Get Scheduled",
-    description: "Receive your interview invitation"
-  },
-  {
-    title: "Interview",
-    description: "Join your virtual interview session"
-  },
-  {
-    title: "Receive Feedback",
-    description: "Get detailed assessment results"
-  }
-];
+"use client"
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Users2, Calendar, VideoIcon } from "lucide-react"
 
 export function HowItWorks() {
   return (
-    <section className="h-full flex items-center bg-muted/30">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold">How It Works</h2>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {steps.map((step, index) => (
-            <div key={index} className="relative">
-              {index < steps.length - 1 && (
-                <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-[2px] bg-muted-foreground/20" />
-              )}
-              <div className="relative z-10 flex flex-col items-center text-center">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                  <span className="text-lg font-bold text-primary">{index + 1}</span>
-                </div>
-                <h3 className="font-medium text-sm mb-1">{step.title}</h3>
-                <p className="text-xs text-muted-foreground">{step.description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+    <section className="container py-24">
+      <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-12">
+        How It Works
+      </h2>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <Users2 className="h-12 w-12 mb-4 text-primary" />
+            <CardTitle>Connect with Interviewers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              Expert interviewers from top companies are ready to help you prepare for your next big opportunity.
+            </CardDescription>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Calendar className="h-12 w-12 mb-4 text-primary" />
+            <CardTitle>Schedule Sessions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              Find a time that works for you with our flexible scheduling system.
+            </CardDescription>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <VideoIcon className="h-12 w-12 mb-4 text-primary" />
+            <CardTitle>Practice Online</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              Join virtual mock interviews with real-time feedback and coding sessions.
+            </CardDescription>
+          </CardContent>
+        </Card>
       </div>
     </section>
-  );
+  )
 }

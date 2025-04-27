@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -11,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { interviewerAPI, roleAPI, type Role } from "@/lib/api-service"
 import { useToast } from "@/hooks/use-toast"
-import { AlertCircle, Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function NewInterviewerPage() {
@@ -348,7 +347,6 @@ export default function NewInterviewerPage() {
 
             {Object.keys(validationErrors).length > 0 && (
               <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Error</AlertTitle>
                 <AlertDescription>Please fix the validation errors before submitting the form.</AlertDescription>
               </Alert>

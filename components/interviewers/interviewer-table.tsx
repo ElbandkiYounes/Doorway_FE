@@ -1,21 +1,27 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useState, useEffect } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { MoreHorizontal, Eye, Edit, Trash, Calendar } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Eye, Edit, Trash, Calendar } from "lucide-react"
-import Link from "next/link"
 import { interviewerAPI, type Interviewer } from "@/lib/api-service"
 import { useToast } from "@/hooks/use-toast"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { InterviewerDetails } from "@/components/interviewers/interviewer-details"
 
 interface InterviewerTableProps {

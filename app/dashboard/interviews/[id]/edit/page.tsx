@@ -19,17 +19,16 @@ import { toast } from 'react-toastify'
 interface FormData {
   interviewerId: string;
   scheduledAt: Date;
+  feedback: string;
   interviewTime: string;
   decision: string;
-  feedback?: string;
 }
 
 interface FormErrors {
-  [key: string]: string; // Add index signature
-  interviewerId: string;
-  scheduledAt: string;
-  interviewTime: string;
-  decision: string;
+  interviewerId?: string;
+  scheduledAt?: string;
+  interviewTime?: string;
+  decision?: string;
 }
 
 export default function EditInterviewPage() {

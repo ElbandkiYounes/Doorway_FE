@@ -1,145 +1,172 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Calendar, Mail, Briefcase, Phone } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Mail, Phone, X } from "lucide-react"
-import { interviewerAPI, type Interviewer } from "@/lib/api-service"
-import { useToast } from "@/hooks/use-toast"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Card, CardContent } from "@/components/ui/card"
+import { interviewerAPI, type Interviewer, type Interview } from "@/lib/api-service"
+import { toast } from "react-toastify"
 import { formatDate } from "@/lib/utils"
 
-export function InterviewerDetails({ id, onClose }: { id: string, onClose: () => void }) {
-  const router = useRouter()
-  const { toast } = useToast()
+interface InterviewerDetailsProps {
+  id: string
+  onClose: () => void
+}
+
+export function InterviewerDetails({ id, onClose }: InterviewerDetailsProps) {
   const [interviewer, setInterviewer] = useState<Interviewer | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchInterviewer = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true)
         const data = await interviewerAPI.getById(id)
         setInterviewer(data)
-        setError(null)
       } catch (err) {
         console.error("Failed to fetch interviewer:", err)
-        setError("Failed to load interviewer details. Please try again later.")
-        toast({
-          title: "Error",
-          description: "Failed to load interviewer details",
-          variant: "destructive",
-        })
+        toast.error("Could not load interviewer details")
       } finally {
         setLoading(false)
       }
     }
 
-    fetchInterviewer()
-  }, [id, toast])
-
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this interviewer? This action cannot be undone.")) {
-      return
+    if (id) {
+      fetchData()
     }
-
-    try {
-      await interviewerAPI.delete(id)
-      toast({
-        title: "Success",
-        description: "Interviewer deleted successfully",
-      })
-      onClose()
-    } catch (err) {
-      console.error("Failed to delete interviewer:", err)
-      toast({
-        title: "Error",
-        description: "Failed to delete interviewer",
-        variant: "destructive",
-      })
-    }
-  }
-
-  if (loading) {
-    return <div className="flex justify-center p-4">Loading interviewer details...</div>
-  }
-
-  if (error) {
-    return (
-      <div className="rounded-md bg-destructive/15 p-4 text-center">
-        <p className="text-destructive">{error}</p>
-        <Button variant="outline" className="mt-2" onClick={() => window.location.reload()}>
-          Retry
-        </Button>
-      </div>
-    )
-  }
-
-  if (!interviewer) {
-    return (
-      <div className="rounded-md bg-destructive/15 p-4 text-center">
-        <p className="text-destructive">Interviewer not found</p>
-        <Button variant="outline" className="mt-2" onClick={onClose}>
-          Back to Interviewers
-        </Button>
-      </div>
-    )
-  }
+  }, [id])
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <Card className="relative max-w-lg w-full mx-4">
-        <Button variant="ghost" size="icon" className="absolute top-2 right-2 rounded-full" onClick={onClose}>
-          <X className="h-4 w-4" />
-        </Button>
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center text-center">
-          <Avatar className="h-32 w-32 mb-4">
-            <AvatarImage
-              src={
-                interviewer.profilePicture
-                  ? `data:image/jpeg;base64,${interviewer.profilePicture}`
-                  : "/placeholder.svg"
-              }
-              alt={interviewer.name}
-            />
-            <AvatarFallback className="text-2xl">
-              {interviewer.name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
-            </AvatarFallback>
-          </Avatar>
-          <h2 className="text-xl font-bold">{interviewer.name}</h2>
-          <Badge variant="secondary" className="mt-2">
-            {interviewer.role.name}
-          </Badge>
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Interviewer Details</DialogTitle>
+          <DialogDescription>View detailed information about this interviewer.</DialogDescription>
+        </DialogHeader>
 
-          <div className="w-full mt-6 space-y-3">
-            <div className="flex items-center">
-              <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-              <span className="text-sm">{interviewer.email}</span>
-            </div>
-            <div className="flex items-center">
-              <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-              <span className="text-sm">{interviewer.phoneNumber}</span>
-            </div>
+        {loading ? (
+          <div className="text-center py-4">Loading...</div>
+        ) : !interviewer ? (
+          <div className="text-center py-4 text-destructive">Failed to load interviewer details</div>
+        ) : (
+          <div className="grid gap-6">
+            {/* Basic Info Card */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-4">
+                  <Avatar className="h-20 w-20">
+                    <AvatarImage
+                      src={
+                        interviewer.profilePicture
+                          ? `data:image/jpeg;base64,${interviewer.profilePicture}`
+                          : "/placeholder.svg"
+                      }
+                      alt={interviewer.name}
+                    />
+                    <AvatarFallback>
+                      {interviewer.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-semibold">{interviewer.name}</h3>
+                    <div className="mt-2 space-y-2">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Mail className="h-4 w-4" />
+                        <span>{interviewer.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Phone className="h-4 w-4" />
+                        <span>{interviewer.phoneNumber}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Briefcase className="h-4 w-4 text-muted-foreground" />
+                        <Badge variant="secondary">{interviewer.role?.name || "No Role Assigned"}</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Interviews */}
+            <Card>
+              <CardContent className="pt-6">
+                <h4 className="text-lg font-semibold mb-4">Recent Interviews</h4>
+                {interviewer.interviews && interviewer.interviews.length > 0 ? (
+                  <div className="space-y-4">
+                    {interviewer.interviews.slice(0, 5).map((interview: Interview) => (
+                      <div
+                        key={interview.id}
+                        className="flex items-center justify-between p-3 rounded-lg border"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage
+                              src={
+                                interview.interviewingProcess?.interviewee?.profilePicture
+                                  ? `data:image/jpeg;base64,${interview.interviewingProcess.interviewee.profilePicture}`
+                                  : "/placeholder.svg"
+                              }
+                              alt={interview.interviewingProcess?.interviewee?.name || "Unknown"}
+                            />
+                            <AvatarFallback>
+                              {interview.interviewingProcess?.interviewee?.name
+                                ? interview.interviewingProcess.interviewee.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")
+                                : "UN"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">
+                              {interview.interviewingProcess?.interviewee?.name || "Unknown Interviewee"}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {interview.interviewingProcess?.role?.name || "Unknown Role"}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            <span className="text-sm">{formatDate(new Date(interview.scheduledAt))}</span>
+                          </div>
+                          {interview.decision && (
+                            <Badge className="bg-green-500 text-white">
+                              {interview.decision}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-muted-foreground">No interviews found</div>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => router.push(`/dashboard/interviewers/${interviewer.id}/edit`)}>
-            Edit
+        )}
+
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={onClose}>
+            Close
           </Button>
-          <Button variant="destructive" onClick={handleDelete}>
-            Delete
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -1,106 +1,102 @@
-'use client';
+"use client"
 
-import React, { useState, useEffect } from 'react';
-import { useMeeting } from '@/lib/meeting-context';
-import Editor from '@monaco-editor/react';
-import { useTheme } from 'next-themes';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Code } from 'lucide-react';
+import { useState, useEffect, useCallback } from "react"
+import { useTheme } from "next-themes"
+import Editor from "react-simple-code-editor"
+import { highlight, languages } from "prismjs"
+import "prismjs/components/prism-java"
+import "prismjs/components/prism-javascript"
+import "prismjs/components/prism-python"
+import "prismjs/components/prism-csharp"
+import "prismjs/components/prism-go"
+import "prismjs/themes/prism-tomorrow.css"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Language } from "@/lib/api-service"
 
 interface CodeEditorProps {
-  roomId: string;
-  userId: string;
+  code: string;
+  language: Language;
+  onCodeChange: (code: string) => void;
+  onLanguageChange: (language: string) => void;
+  readOnly?: boolean;
 }
 
-export function CodeEditor({ roomId, userId }: CodeEditorProps) {
-  const [code, setCode] = useState<string>('// Start coding here...');
-  const [language, setLanguage] = useState<string>('javascript');
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const { sendCodeUpdate, remoteCode, endCall } = useMeeting();
-  const { theme } = useTheme(); // Access the page theme
+const getLanguageForPrism = (language: string) => {
+  switch (language.toLowerCase()) {
+    case "java":
+      return languages.java;
+    case "javascript":
+    case "typescript":
+      return languages.javascript;
+    case "python":
+      return languages.python;
+    case "csharp":
+      return languages.csharp;
+    case "go":
+      return languages.go;
+    default:
+      return languages.java;
+  }
+}
 
-  // Apply remote code changes when they come in
-  useEffect(() => {
-    if (remoteCode && !isEditing) {
-      setCode(remoteCode.code);
-      setLanguage(remoteCode.language);
-    }
-  }, [remoteCode, isEditing]);
+export function CodeEditor({
+  code,
+  language,
+  onCodeChange,
+  onLanguageChange,
+  readOnly = false,
+}: CodeEditorProps) {
+  const { theme } = useTheme()
+  const isDarkMode = theme === "dark"
 
-  const handleEditorChange = (value: string | undefined) => {
-    if (value !== undefined) {
-      setCode(value);
-      // Only send update if user is actively editing
-      // Use debounce to prevent too many updates
-      sendCodeUpdate(value, language);
-    }
-  };
-
-  const handleEditorFocus = () => {
-    setIsEditing(true);
-  };
-
-  const handleEditorBlur = () => {
-    setIsEditing(false);
-  };
-
-  const handleLanguageChange = (newLanguage: string) => {
-    setLanguage(newLanguage);
-    sendCodeUpdate(code, newLanguage);
-  };
-
-  // Add event listener to handle tab close
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      // Call the appropriate method to handle call ending in the meeting context
-      if (typeof window !== 'undefined' && endCall) {
-        endCall();
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [endCall]);
+  const editorStyle = {
+    fontFamily: '"Fira code", "Fira Mono", monospace',
+    fontSize: 14,
+    backgroundColor: isDarkMode ? "hsl(var(--muted))" : "hsl(var(--muted))",
+    color: isDarkMode ? "hsl(var(--foreground))" : "hsl(var(--foreground))",
+  }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex items-center gap-2 p-2 bg-muted/20">
-        <Select value={language} onValueChange={handleLanguageChange}>
-          <SelectTrigger className="w-[180px] h-8 text-xs">
-            <div className="flex items-center gap-2">
-              <Code className="h-4 w-4" />
-              <SelectValue placeholder="Select language" />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="javascript">JavaScript</SelectItem>
-            <SelectItem value="typescript">TypeScript</SelectItem>
-            <SelectItem value="python">Python</SelectItem>
-            <SelectItem value="java">Java</SelectItem>
-            <SelectItem value="csharp">C#</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex-1">
-        <Editor
-          height="100%"
-          defaultLanguage="javascript"
-          language={language}
-          value={code}
-          onChange={handleEditorChange}
-          onFocus={handleEditorFocus}
-          onBlur={handleEditorBlur}
-          options={{
-            minimap: { enabled: false },
-            fontSize: 14,
-            automaticLayout: true,
-          }}
-          theme={theme === 'dark' ? 'vs-dark' : 'vs-light'} // Sync with page theme
-        />
-      </div>
-    </div>
-  );
+    <Card>
+      <CardHeader>
+        <CardTitle>Code Editor</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="language">Language</Label>
+            <Select
+              value={language}
+              onValueChange={onLanguageChange}
+              disabled={readOnly}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.values(Language).map((lang) => (
+                  <SelectItem key={lang} value={lang}>
+                    {lang}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="border rounded-md overflow-hidden">
+            <Editor
+              value={code}
+              onValueChange={readOnly ? () => {} : onCodeChange}
+              highlight={code => highlight(code, getLanguageForPrism(language), language.toLowerCase())}
+              padding={16}
+              readOnly={readOnly}
+              style={editorStyle}
+              className="min-h-[300px] w-full"
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
